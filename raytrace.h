@@ -62,13 +62,13 @@ class RayTrace
       return;
     }
 
-    IT X2IDX(RT x, RT sim_dx, RT sim_N)
+    IT X2IDX(RT x, RT sim_dx, IT sim_N)
     {
       return ((IT) (x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
     }
 
     IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
-                 RT sim_dx, RT sim_N)
+                 RT sim_dx, IT sim_N)
     {
       // Get index immediately before ray position
       return X2IDX(iIDX(dir), sim_dx, sim_N);
