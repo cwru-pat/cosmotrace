@@ -3,6 +3,7 @@
 
 #include "raytrace_macros.h"
 #include "raytrace_data.h"
+#include <algorithm>
 
 namespace cosmo
 {
@@ -20,7 +21,8 @@ namespace cosmo
  *   2) Determine metric at position. Then:
  *      call `copyInCornerPrimitives` and `interpolatePrimitives`
  *      (or call `setPrimitives`)
- *   3) Evolve ray instance from t -> t + dt: RayTrace::evolveRay
+ *   3) Calculate derived components, `setDerivedQuantities`
+ *   4) Evolve ray instance from t -> t + dt: `evolveRay`
  * }
  */
 template <typename RT, typename IT>
@@ -50,7 +52,7 @@ class RayTrace
 
   public:
     // initialize ray with some parameters
-    RayTrace(RT sim_dt_in, RaytraceData<RT> *rd_in)
+    RayTrace(RT sim_dt_in, RaytraceData<RT> rd_in)
     {
       sim_dt = sim_dt_in;
       rd = rd_in;
@@ -74,9 +76,14 @@ class RayTrace
       return X2IDX(iIDX(dir), sim_dx, sim_N);
     }
 
-    IT getRayX(int dir)
+    RT getRayX(int dir)
     {
-      return rd.x[dir];
+      return rd.x[iIDX(dir)];
+    }
+
+    RaytraceData<RT> getRaytraceData()
+    {
+      return rd;
     }
 
     // Set primitives at corners
@@ -140,22 +147,28 @@ class RayTrace
       return C0*(1.0 - rd.x_d[2]) + C1*rd.x_d[2];
     }
 
+    void setDerivedQuantities()
+    {
+      setScreenTensors();
+      setRiemannComponents();
+    }
+
     void setScreenTensors()
     {
       // k^\mu = (E, E*V^i)
-      rd.Sig1[0 /*[01]*/] = -0.5*rd.S1[iIDX(1)]*rd.E;
-      rd.Sig1[1 /*[02]*/] = -0.5*rd.S1[iIDX(2)]*rd.E;
-      rd.Sig1[2 /*[03]*/] = -0.5*rd.S1[iIDX(3)]*rd.E;
-      rd.Sig1[3 /*[12]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
-      rd.Sig1[4 /*[13]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
-      rd.Sig1[5 /*[23]*/] = 0.5*( rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
+      Sig1[0 /*[01]*/] = -0.5*rd.S1[iIDX(1)]*rd.E;
+      Sig1[1 /*[02]*/] = -0.5*rd.S1[iIDX(2)]*rd.E;
+      Sig1[2 /*[03]*/] = -0.5*rd.S1[iIDX(3)]*rd.E;
+      Sig1[3 /*[12]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
+      Sig1[4 /*[13]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
+      Sig1[5 /*[23]*/] = 0.5*( rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
 
-      rd.Sig2[0 /*[01]*/] = -0.5*rd.S2[iIDX(1)]*rd.E;
-      rd.Sig2[1 /*[02]*/] = -0.5*rd.S2[iIDX(2)]*rd.E;
-      rd.Sig2[2 /*[03]*/] = -0.5*rd.S2[iIDX(3)]*rd.E;
-      rd.Sig2[3 /*[12]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
-      rd.Sig2[4 /*[13]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
-      rd.Sig2[5 /*[23]*/] = 0.5*( rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
+      Sig2[0 /*[01]*/] = -0.5*rd.S2[iIDX(1)]*rd.E;
+      Sig2[1 /*[02]*/] = -0.5*rd.S2[iIDX(2)]*rd.E;
+      Sig2[2 /*[03]*/] = -0.5*rd.S2[iIDX(3)]*rd.E;
+      Sig2[3 /*[12]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
+      Sig2[4 /*[13]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
+      Sig2[5 /*[23]*/] = 0.5*( rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
     }
 
     void setRiemannComponents()
@@ -224,9 +237,9 @@ class RayTrace
       // evolve vectors
       for(int i=1; i<=3; ++i)
       {
-        rd.x[i] += sim_dt*rd.V[i];
+        rd.x[iIDX(i)] += sim_dt*rd.V[iIDX(i)];
 
-        rd.V[i] += sim_dt*(
+        rd.V[iIDX(i)] += sim_dt*(
             + ( rd.V[iIDX(1)]*rp.K[aIDX(1,1)] + rd.V[iIDX(2)]*rp.K[aIDX(2,1)] + rd.V[iIDX(3)]*rp.K[aIDX(3,1)] )
               *( 2.0*rp.gi[aIDX(i,1)] - rd.V[iIDX(i)]*rd.V[iIDX(1)] )
             + ( rd.V[iIDX(1)]*rp.K[aIDX(1,2)] + rd.V[iIDX(2)]*rp.K[aIDX(2,2)] + rd.V[iIDX(3)]*rp.K[aIDX(3,2)] )
@@ -244,9 +257,9 @@ class RayTrace
               - rp.G[iIDX(i)][aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
           );
 
-        // partial parallel transport equations - Todo
-        rd.S1[i] += sim_dt*0.0;
-        rd.S2[i] += sim_dt*0.0;
+        // partial parallel transport equations - TODO
+        rd.S1[iIDX(i)] += sim_dt*0.0;
+        rd.S2[iIDX(i)] += sim_dt*0.0;
       }
     } // evolveRay
 
