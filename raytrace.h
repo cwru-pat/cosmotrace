@@ -240,7 +240,7 @@ class RayTrace
         rd.x[iIDX(i)] += sim_dt*rd.V[iIDX(i)];
 
         rd.V[iIDX(i)] += sim_dt*(
-            + ( rd.V[iIDX(1)]*rp.K[aIDX(1,1)] + rd.V[iIDX(2)]*rp.K[aIDX(2,1)] + rd.V[iIDX(3)]*rp.K[aIDX(3,1)] )
+            ( rd.V[iIDX(1)]*rp.K[aIDX(1,1)] + rd.V[iIDX(2)]*rp.K[aIDX(2,1)] + rd.V[iIDX(3)]*rp.K[aIDX(3,1)] )
               *( 2.0*rp.gi[aIDX(i,1)] - rd.V[iIDX(i)]*rd.V[iIDX(1)] )
             + ( rd.V[iIDX(1)]*rp.K[aIDX(1,2)] + rd.V[iIDX(2)]*rp.K[aIDX(2,2)] + rd.V[iIDX(3)]*rp.K[aIDX(3,2)] )
               *( 2.0*rp.gi[aIDX(i,2)] - rd.V[iIDX(i)]*rd.V[iIDX(2)] )

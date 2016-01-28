@@ -4,7 +4,7 @@
 #define RAY_PI 3.14159265358979323846
 
 // map spatial (i,j) to array index
-#define aIDX(i,j) ( i <= j  ? (7-i)*i/2 - 4 + j : (7-j)*j/2 - 4 + i)
+#define aIDX(i,j) ( i <= j  ? (7-i)*i/2 - 4 + j : (7-j)*j/2 - 4 + i )
 // map spatial (i) to array index
 #define iIDX(i) ( i - 1 )
 

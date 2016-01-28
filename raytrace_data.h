@@ -35,9 +35,9 @@ struct RaytraceData {
   // ray position
   RT x[3];
   RT x_d[3]; // normalized ray position for interpolation
-  // ray wavevector
+  // ray velocity vector
   RT V[3];
-  // ray "Energy"
+  // ray Energy
   RT E;
   // screen vectors
   RT S1[3];
