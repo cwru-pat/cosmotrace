@@ -4,6 +4,7 @@
 #include "raytrace_macros.h"
 #include "raytrace_data.h"
 #include <algorithm>
+#include <cmath>
 
 namespace cosmo
 {
@@ -64,17 +65,22 @@ class RayTrace
       return;
     }
 
-    IT X2IDX(RT x, RT sim_dx, IT sim_N)
-    {
-      return ((IT) (x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
-    }
+IT X2IDX(RT x, RT sim_dx, IT sim_N)
+{
+  return ((IT) (x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
+}
 
-    IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
-                 RT sim_dx, IT sim_N)
-    {
-      // Get index immediately before ray position
-      return X2IDX(iIDX(dir), sim_dx, sim_N);
-    }
+IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
+             RT sim_dx, IT sim_N)
+{
+  // Get index immediately before ray position
+  return X2IDX(iIDX(dir), sim_dx, sim_N);
+}
+
+void setRayX_d_1(RT sim_x_d_1)
+{
+  rd.x_d[iIDX(1)] = sim_x_d_1;
+}
 
     RT getRayX(int dir)
     {
@@ -264,6 +270,97 @@ class RayTrace
     } // evolveRay
 
 };
+
+
+template <typename RT>
+RaytracePrimitives<RT> getFRWRayData(RT a, RT H)
+{
+  RaytracePrimitives<RT> rp = {0};
+
+  rp.g[aIDX(1,1)] = a*a;
+  rp.g[aIDX(2,2)] = a*a;
+  rp.g[aIDX(3,3)] = a*a;
+
+  rp.gi[aIDX(1,1)] = 1.0/a/a;
+  rp.gi[aIDX(2,2)] = 1.0/a/a;
+  rp.gi[aIDX(3,3)] = 1.0/a/a;
+
+  rp.K[aIDX(1,1)] = -H*a*a;
+  rp.K[aIDX(2,2)] = -H*a*a;
+  rp.K[aIDX(3,3)] = -H*a*a;
+
+  rp.trK = -3.0*H;
+
+  rp.rho = 3.0*H*H/8.0/RAY_PI;
+
+  return rp;
+}
+
+
+template <typename RT>
+void setFRWRayCorners(RT a, RT H, struct RaytracePrimitives<RT> corner_rp[2][2][2])
+{
+  RaytracePrimitives<RT> rp = {0};
+  rp = getFRWRayData(a, H);
+
+  corner_rp[0][0][0] = rp; corner_rp[0][0][1] = rp; corner_rp[0][1][0] = rp; corner_rp[0][1][1] = rp;
+  corner_rp[1][0][0] = rp; corner_rp[1][0][1] = rp; corner_rp[1][1][0] = rp; corner_rp[1][1][1] = rp;
+
+  return;
+}
+
+
+template <typename RT>
+RaytracePrimitives<RT> getSinusoidRayData(RT x, RT L, RT eps0)
+{
+  RaytracePrimitives<RT> rp = {0};
+
+  // f = sin( 2 pi x / L )
+
+  // g_xx = 1 + eps0*f
+  rp.g[aIDX(1,1)] = 1.0 + eps0*std::sin(2.0*RAY_PI*x/L);
+  rp.g[aIDX(2,2)] = 1.0;
+  rp.g[aIDX(3,3)] = 1.0;
+
+  // g^xx = 1 / g_xx
+  rp.gi[aIDX(1,1)] = 1.0 / rp.g[aIDX(1,1)];
+  rp.gi[aIDX(2,2)] = 1.0;
+  rp.gi[aIDX(3,3)] = 1.0;
+
+  // only one non-zero first derivative
+  rp.dg[iIDX(1)][aIDX(1,1)] = 2.0*RAY_PI/L*eps0*std::cos(2.0*RAY_PI*x/L);
+  // only non-zero second derivative
+  rp.ddg[aIDX(1,1)][aIDX(1,1)] = -2.0*RAY_PI/L*2.0*RAY_PI/L*eps0*std::sin(2.0*RAY_PI*x/L);
+
+  // 3-Christoffel symbols
+  rp.G[iIDX(1)][aIDX(1,1)] = RAY_PI/L*eps0*std::cos(2.0*RAY_PI*x/L);
+  rp.GL[iIDX(1)][aIDX(1,1)] = RAY_PI/L*eps0*std::cos(2.0*RAY_PI*x/L)/(1.0 + eps0*std::sin(2.0*RAY_PI*x/L));
+
+  // need Ricci and rho for D_A integration
+  // but not for geodesic integration
+
+  return rp;
+}
+
+template <typename RT>
+void setSinusoidRayCorners(RT x0, RT x1, RT L, RT eps0, struct RaytracePrimitives<RT> corner_rp[2][2][2])
+{
+  RaytracePrimitives<RT> rp = {0};
+
+  rp = getSinusoidRayData(x0, L, eps0);
+  corner_rp[0][0][0] = rp;
+  corner_rp[0][0][1] = rp;
+  corner_rp[0][1][0] = rp;
+  corner_rp[0][1][1] = rp;
+
+  rp = getSinusoidRayData(x1, L, eps0);
+  corner_rp[1][0][0] = rp;
+  corner_rp[1][0][1] = rp;
+  corner_rp[1][1][0] = rp;
+  corner_rp[1][1][1] = rp;
+
+  return;
+}
 
 
 } // namespace cosmo

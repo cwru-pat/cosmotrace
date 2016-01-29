@@ -34,7 +34,9 @@ template<typename RT>
 struct RaytraceData {
   // ray position
   RT x[3];
-  RT x_d[3]; // normalized ray position for interpolation
+  RT x_d[3]; // normalized ray position for interpolation.
+             // given a gridpoint x0 < x < x0 + dx
+             // x_d = (x - x0) / dx
   // ray velocity vector
   RT V[3];
   // ray Energy
