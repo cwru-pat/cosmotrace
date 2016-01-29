@@ -265,7 +265,7 @@ void setRayX_d_1(RT sim_x_d_1)
 
         rd.D_A += sim_dt*rd.P;
         rd.P += sim_dt*(
-            D_A / rd.E / rd.E * (
+            rd.D_A / rd.E / rd.E * (
               R_optical - (rd.Q_Re*rd.Q_Re + rd.Q_Im*rd.Q_Im)/rd.D_A/rd.D_A/rd.D_A/rd.D_A
             ) + rd.P * (
               // K_ij*Vi*Vj
