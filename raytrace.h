@@ -225,22 +225,16 @@ void setRayX_d_1(RT sim_x_d_1)
     // evolve ray; simple eulerian integration for now.
     void evolveRay()
     {
-      // necessary vars for evolving
-      RT R_optical = RicciLensingScalarSum();
-      RT W_optical_Re = WeylLensingScalarSum_Re();
-      RT W_optical_Im = WeylLensingScalarSum_Im();
+      // General raytracing; non-angular-diameter-distance calcs
 
-      // evolve scalars
+      // evolve Energy
       rd.E += sim_dt*rd.E*(
           /* K_{ij} * V^{i} * V^{j} */
           rp.K[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.K[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.K[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
           + 2.0*(rp.K[aIDX(1,2)]*rd.V[iIDX(1)]*rd.V[iIDX(2)] + rp.K[aIDX(1,3)]*rd.V[iIDX(1)]*rd.V[iIDX(3)] + rp.K[aIDX(2,3)]*rd.V[iIDX(2)]*rd.V[iIDX(3)])
         );
-      rd.D_A += sim_dt*rd.D_A*( R_optical - (rd.Q_Re*rd.Q_Re + rd.Q_Im*rd.Q_Im)/rd.D_A/rd.D_A/rd.D_A/rd.D_A );
-      rd.Q_Re += sim_dt*rd.D_A*rd.D_A*W_optical_Re;
-      rd.Q_Im += sim_dt*rd.D_A*rd.D_A*W_optical_Im;
 
-      // evolve vectors
+      // evolve Velocity vector
       for(int i=1; i<=3; ++i)
       {
         rd.x[iIDX(i)] += sim_dt*rd.V[iIDX(i)];
@@ -263,7 +257,28 @@ void setRayX_d_1(RT sim_x_d_1)
               - rp.G[iIDX(i)][aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
           );
 
+        // Evolution of angular diameter distance quantities
+        // necessary vars for evolving
+        RT R_optical = RicciLensingScalarSum();
+        RT W_optical_Re = WeylLensingScalarSum_Re();
+        RT W_optical_Im = WeylLensingScalarSum_Im();
+
+        rd.D_A += sim_dt*rd.P;
+        rd.P += sim_dt*(
+            D_A / rd.E / rd.E * (
+              R_optical - (rd.Q_Re*rd.Q_Re + rd.Q_Im*rd.Q_Im)/rd.D_A/rd.D_A/rd.D_A/rd.D_A
+            ) + rd.P * (
+              // K_ij*Vi*Vj
+              rp.K[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.K[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.K[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
+              + 2.0*(rp.K[aIDX(1,2)]*rd.V[iIDX(1)]*rd.V[iIDX(2)] + rp.K[aIDX(1,3)]*rd.V[iIDX(1)]*rd.V[iIDX(3)] + rp.K[aIDX(2,3)]*rd.V[iIDX(2)]*rd.V[iIDX(3)])
+            )
+          );
+
+        rd.Q_Re += -sim_dt/rd.E/2.0*rd.D_A*rd.D_A*W_optical_Re;
+        rd.Q_Im += sim_dt/rd.E*rd.D_A*rd.D_A*W_optical_Im;
+
         // partial parallel transport equations - TODO
+        // S_A is spatial, _|_ V
         rd.S1[iIDX(i)] += sim_dt*0.0;
         rd.S2[iIDX(i)] += sim_dt*0.0;
       }

@@ -44,8 +44,8 @@ struct RaytraceData {
   // screen vectors
   RT S1[3];
   RT S2[3];
-  // angular diameter distance
-  RT D_A;
+  // angular diameter distance & time derivative
+  RT P, D_A;
   // D_A^2 * "sigma"
   RT Q_Re;
   RT Q_Im;
