@@ -1,16 +1,31 @@
-
 #include "raytrace.h"
 #include <iostream>
+#include <string>
+#include <map>  
 #include <cmath>
 
 typedef double real_t;
 
 int main(int argc, char **argv)
 {
-
+  // run time
   real_t t_start = 1.0;
-  real_t t_end = 10.0;
-  real_t dt = 0.04; // units tbd
+  real_t t_end = 1.5;
+  real_t dt = 0.001; // units tbd
+
+
+  // Type of spacetime for testing
+  std::map<int, std::string> test_type_list = {
+    {1, "Standard FRW"},
+    {2, "Interpolated FRW"},
+    {3, "Sinusoid spacetime"},
+    {4, "Interpolated Sinusoid"}
+  };
+  int test_type = 0;
+  std::cout << "\n Enter test simulation type: \n";
+  for(auto i=test_type_list.begin(); i!=test_type_list.end(); ++i)
+    std::cout << i->first << ':' << i->second << '\n';
+  std::cin >> test_type;
 
 
   // Initial conditions
@@ -18,75 +33,84 @@ int main(int argc, char **argv)
     // Direction of propagation
     rd.V[0] = 0.2;
     rd.V[1] = 0.4;
-    rd.V[2] = 0.8944272;
+    rd.V[2] = 0.894427191;
     // energy in arb. untis
     rd.E = 1.0;
-    // screen in x-y dirs
-    rd.S1[0] = 1.0;
-    rd.S2[1] = 1.0;
     // Initial 
-    rd.D_A = 1.0;
-    rd.Q_Re = 0.0;
-    rd.Q_Im = 0.0;
+    rd.Omega = 1.0;
+    rd.b = 1.0;
+    rd.sig_Re = 0.0;
+    rd.sig_Im = 0.0;
+
 
   // create "ray", initialize with above ICs
   cosmo::RayTrace<real_t, int> * ray;
   ray = new cosmo::RayTrace<real_t, int> (dt, rd);
 
+  // evolve ray
   std::cout << "Running...";
   for(real_t t = t_start; t <= t_end; t += dt)
   {
-    // use an FRW spacetime
-      real_t a = std::pow( t, 2.0/3.0 );
-      real_t H = 2.0/3.0/t;
-      // set primitives directly
-        cosmo::RaytracePrimitives<real_t> rp = {0};
+
+    // set background spacetime properties according to test_type
+    real_t L = 1.0;
+    real_t dx = 0.2;
+    real_t eps0 = 0.1;
+    real_t x = ray->getRayX(1);
+    real_t x0 = dx*std::floor(x/dx);
+    real_t x1 = dx*std::ceil(x/dx);
+    real_t x_d = (x - x0) / dx;
+    real_t a = std::pow( t, 2.0/3.0 );
+    real_t H = 2.0/3.0/t;
+    cosmo::RaytracePrimitives<real_t> rp = {0};
+    struct cosmo::RaytracePrimitives<real_t> corner_rp[2][2][2];
+    switch (test_type)
+    {
+      case 4:
+        cosmo::setSinusoidRayCorners(x0, x1, L, eps0, corner_rp);
+        ray->copyInCornerPrimitives(corner_rp);
+        ray->setRayX_d_1(x_d);
+        ray->interpolatePrimitives();
+        break;
+      case 3:
+        rp = cosmo::getSinusoidRayData(x, L, eps0);
+        ray->setPrimitives(rp);
+        break;
+      case 2:
+        cosmo::setFRWRayCorners(a, H, corner_rp);
+        ray->copyInCornerPrimitives(corner_rp);
+        ray->interpolatePrimitives();
+        break;
+      case 1:
+      default:
         rp = cosmo::getFRWRayData(a, H);
         ray->setPrimitives(rp);
-      // Or: set primitives nearby for interpolation
-        // struct cosmo::RaytracePrimitives<real_t> corner_rp[2][2][2];
-        // cosmo::setFRWRayCorners(a, H, corner_rp);
-        // ray->copyInCornerPrimitives(corner_rp);
-        // ray->interpolatePrimitives();
-
-    // use a static sinusoid spacetime
-      real_t L = 1.0;
-      real_t dx = 0.2;
-      real_t eps0 = 0.1;
-      real_t x = ray->getRayX(1);
-      // set primitives directly
-        // cosmo::RaytracePrimitives<real_t> rp = {0};
-        // rp = cosmo::getSinusoidRayData(x, L, eps0);
-        // ray->setPrimitives(rp);
-      // or: set primitives nearby for interpolation
-        // struct cosmo::RaytracePrimitives<real_t> corner_rp[2][2][2];
-        // real_t x0 = dx*std::floor(x/dx);
-        // real_t x1 = dx*std::ceil(x/dx);
-        // real_t x_d = (x - x0) / dx;
-        // cosmo::setSinusoidRayCorners(x0, x1, L, eps0, corner_rp);
-        // ray->copyInCornerPrimitives(corner_rp);
-        // ray->setRayX_d_1(x_d);
-        // ray->interpolatePrimitives();
+        break;
+    }
 
 
+    // evolve ray
     ray->setDerivedQuantities();
     ray->evolveRay();
 
+
+    // print ray information
     rd = ray->getRaytraceData();
+    std::cout << "Ray is at X = ("
+              << ray->getRayX(1) << ", "
+              << ray->getRayX(2) << ", "
+              << ray->getRayX(3)
+              << ") with velocity V = ("
+              << rd.V[0] << ", "
+              << rd.V[1] << ", "
+              << rd.V[2]
+              << ") and E = "
+              << rd.E
+              << ", sig^2 = "
+              << rd.sig_Re*rd.sig_Re + rd.sig_Im*rd.sig_Im
+              << "\n";
+    // std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
 
-    // std::cout << "Ray is at X = ("
-    //           << ray->getRayX(1) << ", "
-    //           << ray->getRayX(2) << ", "
-    //           << ray->getRayX(3)
-    //           << ") with velocity V = ("
-    //           << rd.V[0] << ", "
-    //           << rd.V[1] << ", "
-    //           << rd.V[2]
-    //           << ") and E = "
-    //           << rd.E
-    //           << "\n";
-
-    std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
   }
   std::cout << " done.\n";
 
