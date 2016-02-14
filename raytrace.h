@@ -69,22 +69,24 @@ class RayTrace
       return;
     }
 
-IT X2IDX(RT x, RT sim_dx, IT sim_N)
-{
-  return ((IT) (x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
-}
+    IT X2IDX(RT x, RT sim_dx, IT sim_N)
+    {
+      return (std::floor(x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
+    }
 
-IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
-             RT sim_dx, IT sim_N)
-{
-  // Get index immediately before ray position
-  return X2IDX(iIDX(dir), sim_dx, sim_N);
-}
+    IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
+                 RT sim_dx, IT sim_N)
+    {
+      // return index immediately before ray position
+      return X2IDX(getRayX(dir), sim_dx, sim_N);
+    }
 
-void setRayX_d_1(RT sim_x_d_1)
-{
-  rd.x_d[iIDX(1)] = sim_x_d_1;
-}
+    void setRayX_d(RT sim_dx)
+    {
+      rd.x_d[iIDX(1)] = std::fmod(getRayX(1) / sim_dx, 1.0);
+      rd.x_d[iIDX(2)] = std::fmod(getRayX(2) / sim_dx, 1.0);
+      rd.x_d[iIDX(3)] = std::fmod(getRayX(3) / sim_dx, 1.0);
+    }
 
     RT getRayX(int dir)
     {

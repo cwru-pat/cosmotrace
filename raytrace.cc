@@ -63,7 +63,6 @@ int main(int argc, char **argv)
     rd.sig_Re = 0.0;
     rd.sig_Im = 0.0;
 
-
   // create "ray", initialize with above ICs
   cosmo::RayTrace<real_t, int> * ray;
   ray = new cosmo::RayTrace<real_t, int> (dt, rd);
@@ -80,7 +79,6 @@ int main(int argc, char **argv)
     real_t x = ray->getRayX(1);
     real_t x0 = dx*std::floor(x/dx);
     real_t x1 = dx*std::ceil(x/dx);
-    real_t x_d = (x - x0) / dx;
     real_t a = std::pow( t, 2.0/3.0 );
     real_t H = 2.0/3.0/t;
     cosmo::RaytracePrimitives<real_t> rp = {0};
@@ -90,7 +88,7 @@ int main(int argc, char **argv)
       case 4:
         cosmo::setSinusoidRayCorners(x0, x1, L, eps0, corner_rp);
         ray->copyInCornerPrimitives(corner_rp);
-        ray->setRayX_d_1(x_d);
+        ray->setRayX_d(dx);
         ray->interpolatePrimitives();
         break;
       case 3:
