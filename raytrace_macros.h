@@ -23,7 +23,7 @@
   )
 
 #define RIEMANN_I0MJ(i, m, j) ( \
-    rp.dK[j][aIDX(i,m)] - rp.dK[m][aIDX(i,j)] \
+    rp.dK[iIDX(j)][aIDX(i,m)] - rp.dK[iIDX(m)][aIDX(i,j)] \
     + rp.gi[aIDX(1,1)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,1)] \
       + rp.gi[aIDX(1,2)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,2)] \
       + rp.gi[aIDX(1,3)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,3)] \
@@ -45,7 +45,6 @@
   )
 
 #define RIEMANN_I00J(i, j) \
-  /* todo - set tr(K) */ \
   -rp.Ricci[aIDX(i,j)] - rp.trK*rp.K[aIDX(i,j)] + 4.0*RAY_PI*rp.g[aIDX(i,j)]*rp.rho
 
 #define LINEAR_INTERPOLATION(var) \

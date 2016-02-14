@@ -71,7 +71,7 @@ class RayTrace
 
     IT X2IDX(RT x, RT sim_dx, IT sim_N)
     {
-      return (std::floor(x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
+      return ((IT) (x/sim_dx)) % sim_N; // periodic; assumes cubic lattice
     }
 
     IT getRayIDX(int dir /* x/y/z (= 1, 2, 3) direction */,
