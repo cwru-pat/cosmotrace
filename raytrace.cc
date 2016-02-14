@@ -3,6 +3,11 @@
 #include <string>
 #include <map>  
 #include <cmath>
+#include <fstream>
+#include <sys/stat.h>
+#include <iomanip>
+#include <limits>
+#include <iostream>
 
 typedef double real_t;
 
@@ -10,9 +15,25 @@ int main(int argc, char **argv)
 {
   // run time
   real_t t_start = 1.0;
-  real_t t_end = 1.5;
-  real_t dt = 0.001; // units tbd
+  real_t t_end = 4.0;
+  real_t dt = 0.00005; // units tbd
 
+  // file for writing
+  std::ofstream fout;
+  mkdir("output", 0755);
+  if(std::ifstream("output/RayTrace.dat"))
+  {
+    int s=1;
+    while(std::ifstream(
+        "output/RayTrace." + std::to_string(s) + ".dat"
+      ))
+      s += 1;
+    fout.open("output/RayTrace." + std::to_string(s) + ".dat");
+  }
+  else
+  {
+    fout.open("output/RayTrace.dat");
+  }
 
   // Type of spacetime for testing
   std::map<int, std::string> test_type_list = {
@@ -54,7 +75,7 @@ int main(int argc, char **argv)
 
     // set background spacetime properties according to test_type
     real_t L = 1.0;
-    real_t dx = 0.2;
+    real_t dx = 0.0002;
     real_t eps0 = 0.1;
     real_t x = ray->getRayX(1);
     real_t x0 = dx*std::floor(x/dx);
@@ -96,23 +117,26 @@ int main(int argc, char **argv)
 
     // print ray information
     rd = ray->getRaytraceData();
-    std::cout << "Ray is at X = ("
-              << ray->getRayX(1) << ", "
-              << ray->getRayX(2) << ", "
-              << ray->getRayX(3)
-              << ") with velocity V = ("
-              << rd.V[0] << ", "
-              << rd.V[1] << ", "
-              << rd.V[2]
-              << ") and E = "
-              << rd.E
-              << ", sig^2 = "
-              << rd.sig_Re*rd.sig_Re + rd.sig_Im*rd.sig_Im
-              << "\n";
+    // std::cout << "Ray is at X = ("
+    //           << ray->getRayX(1) << ", "
+    //           << ray->getRayX(2) << ", "
+    //           << ray->getRayX(3)
+    //           << ") with velocity V = ("
+    //           << rd.V[0] << ", "
+    //           << rd.V[1] << ", "
+    //           << rd.V[2]
+    //           << ") and E = "
+    //           << rd.E
+    //           << "\n";
     // std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
+    
+    fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+         << ray->WeylLensingScalarSum_Re() << '\t'
+         << ray->WeylLensingScalarSum_Im() << '\n';
 
   }
   std::cout << " done.\n";
+  fout.close();
 
   return 0;
 }

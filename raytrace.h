@@ -5,6 +5,9 @@
 #include "raytrace_data.h"
 #include <algorithm>
 #include <cmath>
+
+#include <iomanip>
+#include <limits>
 #include <iostream>
 
 namespace cosmo
@@ -267,7 +270,8 @@ void setRayX_d_1(RT sim_x_d_1)
         RT W_optical_Re = WeylLensingScalarSum_Re();
         RT W_optical_Im = WeylLensingScalarSum_Im();
 
-if(W_optical_Re != 0.0) {
+if(false) {
+  std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1);
   std::cout << "> Not zero! \n";
   std::cout << "  R_1001 = " << R_1001 << "\n";
   std::cout << "  R_2002 = " << R_2002 << "\n";
@@ -282,6 +286,9 @@ if(W_optical_Re != 0.0) {
   std::cout << "  sig1_12*sig2_12 = " << varSig1[3 /*12*/] * varSig2[3 /*12*/] << "\n";
   std::cout << "  sig1_13*sig2_13 = " << varSig1[4 /*13*/] * varSig2[4 /*13*/] << "\n";
   std::cout << "  sig1_23*sig2_23 = " << varSig1[5 /*23*/] * varSig2[5 /*23*/] << "\n";
+  std::cout << "  W11 = " << WeylLensingScalarSum(1,1) << "\n";
+  std::cout << "  W22 = " << WeylLensingScalarSum(2,2) << "\n";
+
 }
 
         ev_Omega = -rd.E*rd.b*(
@@ -297,20 +304,35 @@ if(W_optical_Re != 0.0) {
         // Evolve shear rate variable
         // S_A is spatial, _|_ V
           // Basic Gram–Schmidt to get an S1 and S2
-          RT s1b[3] = {0.0, 1.0, 0.0}; // basis vector for S1
-          RT s2b[3] = {1.0, 0.0, 0.0}; // basis vector for S2
-          // basis vectors not along V
-          if(rd.V[1] == 0.0 && rd.V[2] == 0.0) { s1b[0] = 0.0; s1b[2] = 1.0; }
-          if(rd.V[0] == 0.0 && rd.V[2] == 0.0) { s2b[1] = 0.0; s2b[2] = 1.0; }
+          RT s1b[3] = {0.0, 1.0, 0.5}; // basis vector for S1
+          RT s2b[3] = {1.0, 0.5, 0.0}; // basis vector for S2
+          // if V is in x-y plane, pick vectors out of that plane
+          if(rd.V[2] == 0.0) { s1b[2] = 1.0; s2b[2] = 1.0; }
+          // if V is in x-z plane, pick vectors out of that plane
+          if(rd.V[1] == 0.0) { s2b[1] = 1.0; }
+          // if V is in y-z plane, pick vectors out of that plane
+          if(rd.V[0] == 0.0) { s1b[0] = 1.0; }
+
+          // normalize V
+            RT magV = std::sqrt(
+                  rp.g[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
+                  + 2.0*(rp.g[aIDX(1,2)]*rd.V[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*rd.V[iIDX(2)]*rd.V[iIDX(3)])
+              );
+            for(int i=1; i<=3; i++)
+            {
+              rd.V[iIDX(i)] /= magV;
+            }
+
           // subtract out part of s1 along V & normalize
             for(int i=1; i<=3; i++)
             {
               new_S1[iIDX(i)] = s1b[iIDX(i)] - (
                   rp.g[aIDX(1,1)]*s1b[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*s1b[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*s1b[iIDX(3)]*rd.V[iIDX(3)]
-                  + 2.0*(rp.g[aIDX(1,2)]*s1b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s1b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s1b[iIDX(2)]*rd.V[iIDX(3)])
+                  + rp.g[aIDX(1,2)]*s1b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s1b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s1b[iIDX(2)]*rd.V[iIDX(3)]
+                  + rp.g[aIDX(1,2)]*s1b[iIDX(2)]*rd.V[iIDX(1)] + rp.g[aIDX(1,3)]*s1b[iIDX(3)]*rd.V[iIDX(1)] + rp.g[aIDX(2,3)]*s1b[iIDX(3)]*rd.V[iIDX(2)]
                 )*rd.V[iIDX(i)];
             }
-            RT mags1 = (
+            RT mags1 = std::sqrt(
                   rp.g[aIDX(1,1)]*new_S1[iIDX(1)]*new_S1[iIDX(1)] + rp.g[aIDX(2,2)]*new_S1[iIDX(2)]*new_S1[iIDX(2)] + rp.g[aIDX(3,3)]*new_S1[iIDX(3)]*new_S1[iIDX(3)]
                   + 2.0*(rp.g[aIDX(1,2)]*new_S1[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*new_S1[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*new_S1[iIDX(2)]*new_S1[iIDX(3)])
               );
@@ -318,6 +340,7 @@ if(W_optical_Re != 0.0) {
             {
               new_S1[iIDX(i)] /= mags1;
             }
+
           // subtract out part of s2 along V & s1
             for(int i=1; i<=3; i++)
             {
@@ -329,7 +352,7 @@ if(W_optical_Re != 0.0) {
                   + 2.0*(rp.g[aIDX(1,2)]*s2b[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*s2b[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*s2b[iIDX(2)]*new_S1[iIDX(3)])
                 )*new_S1[iIDX(i)];
             }
-            RT mags2 = (
+            RT mags2 = std::sqrt(
                   rp.g[aIDX(1,1)]*new_S2[iIDX(1)]*new_S2[iIDX(1)] + rp.g[aIDX(2,2)]*new_S2[iIDX(2)]*new_S2[iIDX(2)] + rp.g[aIDX(3,3)]*new_S2[iIDX(3)]*new_S2[iIDX(3)]
                   + 2.0*(rp.g[aIDX(1,2)]*new_S2[iIDX(1)]*new_S2[iIDX(2)] + rp.g[aIDX(1,3)]*new_S2[iIDX(1)]*new_S2[iIDX(3)] + rp.g[aIDX(2,3)]*new_S2[iIDX(2)]*new_S2[iIDX(3)])
               );
