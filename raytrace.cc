@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     rd.E = 1.0;
     // Initial 
     rd.Omega = 1.0;
-    rd.b = 1.0;
+    rd.b = 0.0;
     rd.sig_Re = 0.0;
     rd.sig_Im = 0.0;
 
@@ -129,6 +129,8 @@ int main(int argc, char **argv)
     // std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
     
     fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+         << rd.b << '\t'
+         << rd.Omega << '\t'
          << ray->WeylLensingScalarSum_Re() << '\t'
          << ray->WeylLensingScalarSum_Im() << '\n';
 
