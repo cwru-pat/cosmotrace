@@ -45,7 +45,7 @@ struct RaytraceData {
   RT S1[3];
   RT S2[3];
   // beam root area b, and lambda-derivative
-  RT b, Omega;
+  RT ell, Phi;
   // sachs scalar sigma
   RT sig_Re;
   RT sig_Im;

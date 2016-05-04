@@ -14,9 +14,10 @@ typedef double real_t;
 int main(int argc, char **argv)
 {
   // run time
-  real_t t_start = 1.0;
-  real_t t_end = 4.0;
-  real_t dt = 0.00005; // units tbd
+  real_t t_start = 4.0;
+  real_t t_end = 0.0;
+  real_t t_ref = 1.0;
+  real_t dt = -0.005; // units tbd
 
   // file for writing
   std::ofstream fout;
@@ -45,21 +46,22 @@ int main(int argc, char **argv)
   int test_type = 0;
   std::cout << "\n Enter test simulation type: \n";
   for(auto i=test_type_list.begin(); i!=test_type_list.end(); ++i)
-    std::cout << i->first << ':' << i->second << '\n';
+    std::cout << "  " << i->first << ": " << i->second << '\n';
+  std::cout << " > ";
   std::cin >> test_type;
-
 
   // Initial conditions
   cosmo::RaytraceData<real_t> rd = {0};
-    // Direction of propagation
-    rd.V[0] = 0.2;
-    rd.V[1] = 0.4;
-    rd.V[2] = 0.894427191;
+    // Direction of propagation (will be normalized during sim.)
+    real_t a_start = std::pow( t_start, 2.0/3.0 );
+    rd.V[0] = 0.2 / a_start;
+    rd.V[1] = 0.6 / a_start;
+    rd.V[2] = std::sqrt( 1.0 - rd.V[0]*rd.V[0] - rd.V[1]*rd.V[1] ) / a_start;
     // energy in arb. untis
     rd.E = 1.0;
     // Initial 
-    rd.Omega = 1.0;
-    rd.b = 0.0;
+    rd.Phi = 1.0;
+    rd.ell = 0.0;
     rd.sig_Re = 0.0;
     rd.sig_Im = 0.0;
 
@@ -69,7 +71,7 @@ int main(int argc, char **argv)
 
   // evolve ray
   std::cout << "Running...";
-  for(real_t t = t_start; t <= t_end; t += dt)
+  for(real_t t = t_start; t >= t_end; t += dt)
   {
 
     // set background spacetime properties according to test_type
@@ -81,6 +83,7 @@ int main(int argc, char **argv)
     real_t x1 = dx*std::ceil(x/dx);
     real_t a = std::pow( t, 2.0/3.0 );
     real_t H = 2.0/3.0/t;
+
     cosmo::RaytracePrimitives<real_t> rp = {0};
     struct cosmo::RaytracePrimitives<real_t> corner_rp[2][2][2];
     switch (test_type)
@@ -129,8 +132,12 @@ int main(int argc, char **argv)
     // std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
     
     fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
-         << rd.b << '\t'
-         << rd.Omega << '\t'
+         << rd.ell << '\t'
+         << rd.Phi << '\t'
+         << rd.E << '\t'
+         << rd.V[iIDX(1)]*rd.V[iIDX(1)] + rd.V[iIDX(2)]*rd.V[iIDX(2)] + rd.V[iIDX(3)]*rd.V[iIDX(3)] << '\t'
+         << a << '\t'
+         << t << '\t'
          << ray->WeylLensingScalarSum_Re() << '\t'
          << ray->WeylLensingScalarSum_Im() << '\n';
 

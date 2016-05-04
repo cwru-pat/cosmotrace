@@ -19,7 +19,7 @@ namespace cosmo
  *  - Angular diameter distance tracing must be done in synchronous gauge
  *  - observers are assumed to be at rest, eg. U^\mu = {1,0,0,0}
  * To use this class
- * for(t = t_i; t <= t_f; t += dt)
+ * for(t = t_i; t <= t_f; t += dt) (but might want to run "in reverse")
  * {
  *   1) position for ray instance is given by RayTrace::getRayX
  *      (or RayTrace::getRayIDX)
@@ -255,7 +255,7 @@ class RayTrace
     void evolveRay()
     {
       // General raytracing; non-angular-diameter-distance calcs
-      RT ev_E, ev_x[3], ev_V[3], ev_Omega, ev_b, ev_sig_Re, ev_sig_Im;
+      RT ev_E, ev_x[3], ev_V[3], ev_Phi, ev_ell, ev_sig_Re, ev_sig_Im;
       RT new_S1[3], new_S2[3];
 
       // normalize V
@@ -305,23 +305,23 @@ class RayTrace
       RT W_optical_Re = WeylLensingScalarSum_Re();
       RT W_optical_Im = WeylLensingScalarSum_Im();
 
-      if(rd.b == 0)
+      if(rd.ell == 0)
       {
-        ev_Omega = 0;
+        ev_Phi = 0;
       }
       else
       {
-        ev_Omega = rd.E*rd.b*(
-            R_optical - rd.sig_Re*rd.sig_Re/rd.b/rd.b/rd.b/rd.b
-                      - rd.sig_Im*rd.sig_Im/rd.b/rd.b/rd.b/rd.b
+        ev_Phi = 1.0/rd.E*rd.ell*(
+            R_optical - rd.sig_Re*rd.sig_Re/rd.ell/rd.ell/rd.ell/rd.ell
+                      - rd.sig_Im*rd.sig_Im/rd.ell/rd.ell/rd.ell/rd.ell
           );
       }
 
-      ev_b = rd.E*rd.Omega;
+      ev_ell = 1.0/rd.E*rd.Phi;
 
-      ev_sig_Re = rd.E*rd.b*rd.b*W_optical_Re;
+      ev_sig_Re = 1.0/rd.E*rd.ell*rd.ell*W_optical_Re;
 
-      ev_sig_Im = rd.E*rd.b*rd.b*W_optical_Im;
+      ev_sig_Im = 1.0/rd.E*rd.ell*rd.ell*W_optical_Im;
 
       // Evolve shear rate variable
       // S_A is spatial, _|_ V
@@ -375,8 +375,8 @@ class RayTrace
 
       // compute evolved values (simple Eulerian integration for now...)
       rd.E += sim_dt*ev_E;
-      rd.Omega += sim_dt*ev_Omega;
-      rd.b += sim_dt*ev_b;
+      rd.Phi += sim_dt*ev_Phi;
+      rd.ell += sim_dt*ev_ell;
       rd.sig_Re += sim_dt*ev_sig_Re;
       rd.sig_Im += sim_dt*ev_sig_Im;
       for(int i=0; i<3; i++)
