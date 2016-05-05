@@ -37,7 +37,7 @@ template <typename RT, typename IT>
 class RayTrace
 {
   /* Simulation timestep */
-    RT sim_dt;
+    RT sim_dt, sim_dx;
 
   /* Evolved variables */
     RaytraceData<RT> rd;
@@ -65,9 +65,10 @@ class RayTrace
      * @param[in]  sim_dt_in  simulation timestep dt
      * @param[in]  rd_in      RaytraceData containing ICs
      */
-    RayTrace(RT sim_dt_in, RaytraceData<RT> rd_in)
+    RayTrace(RT sim_dt_in, RT sim_dx_in, RaytraceData<RT> rd_in)
     {
       sim_dt = sim_dt_in;
+      sim_dx = sim_dx_in;
       rd = rd_in;
       return;
     }
@@ -104,7 +105,7 @@ class RayTrace
       return X2IDX(getRayX(dir), sim_dx, sim_N);
     }
 
-    void setRayX_d(RT sim_dx)
+    void setRayX_d()
     {
       rd.x_d[iIDX(1)] = std::fmod(getRayX(1) / sim_dx, 1.0);
       rd.x_d[iIDX(2)] = std::fmod(getRayX(2) / sim_dx, 1.0);
@@ -136,7 +137,8 @@ class RayTrace
     // interpolate primitives
     void interpolatePrimitives()
     {
-      // interpolate all quantities
+      // fractional coordinates of ray position between corners
+      setRayX_d();
 
       // rho (doesn't have [6] components)
       rp.rho = LINEAR_INTERPOLATION(rho);
@@ -418,7 +420,7 @@ RaytracePrimitives<RT> getFRWRayData(RT a, RT H)
 
 
 template <typename RT>
-void setFRWRayCorners(RT a, RT H, struct RaytracePrimitives<RT> corner_rp[2][2][2])
+void setFRWRayCornerPrimitives(RT a, RT H, struct RaytracePrimitives<RT> corner_rp[2][2][2])
 {
   RaytracePrimitives<RT> rp = {0};
   rp = getFRWRayData(a, H);
@@ -463,9 +465,12 @@ RaytracePrimitives<RT> getSinusoidRayData(RT x, RT L, RT eps0)
 }
 
 template <typename RT>
-void setSinusoidRayCorners(RT x0, RT x1, RT L, RT eps0, struct RaytracePrimitives<RT> corner_rp[2][2][2])
+void setSinusoidRayCornerPrimitives(RT x, RT dx, RT L, RT eps0, struct RaytracePrimitives<RT> corner_rp[2][2][2])
 {
   RaytracePrimitives<RT> rp = {0};
+
+  RT x0 = dx*std::floor(x/dx);
+  RT x1 = dx*std::ceil(x/dx);
 
   rp = getSinusoidRayData(x0, L, eps0);
   corner_rp[0][0][0] = rp;
@@ -482,6 +487,49 @@ void setSinusoidRayCorners(RT x0, RT x1, RT L, RT eps0, struct RaytracePrimitive
   return;
 }
 
+
+template <typename RT>
+RaytracePrimitives<RT> getKasnerRayData(RT px, RT py, RT pz, RT t)
+{
+  RaytracePrimitives<RT> rp = {0};
+
+  RT ax = -std::pow( t, px );
+  RT ay = -std::pow( t, py );
+  RT az = -std::pow( t, pz );
+  RT Kx = -ax*px*std::pow( t, px-1.0 );
+  RT Ky = -ay*py*std::pow( t, py-1.0 );
+  RT Kz = -az*pz*std::pow( t, pz-1.0 );
+
+  rp.g[aIDX(1,1)] = ax*ax;
+  rp.g[aIDX(2,2)] = ay*ay;
+  rp.g[aIDX(3,3)] = az*az;
+
+  rp.gi[aIDX(1,1)] = 1.0/ax/ax;
+  rp.gi[aIDX(2,2)] = 1.0/ay/ay;
+  rp.gi[aIDX(3,3)] = 1.0/az/az;
+
+  rp.K[aIDX(1,1)] = Kx;
+  rp.K[aIDX(2,2)] = Ky;
+  rp.K[aIDX(3,3)] = Kz;
+
+  rp.trK = Kx/ax/ax + Ky/ay/ay + Kz/az/az;
+
+  return rp;
+}
+
+template <typename RT>
+void setKasnerRayCornerPrimitives(RT px, RT py, RT pz, RT t,
+  struct RaytracePrimitives<RT> corner_rp[2][2][2])
+{
+  // Kasner Parameters
+  RaytracePrimitives<RT> rp = {0};
+
+  rp = getKasnerRayData(px, py, pz, t);
+  corner_rp[0][0][0] = rp;  corner_rp[0][0][1] = rp;  corner_rp[0][1][0] = rp;  corner_rp[0][1][1] = rp;
+  corner_rp[1][0][0] = rp;  corner_rp[1][0][1] = rp;  corner_rp[1][1][0] = rp;  corner_rp[1][1][1] = rp;
+
+  return;
+}
 
 } // namespace cosmo
 

@@ -18,6 +18,7 @@ int main(int argc, char **argv)
   real_t t_end = 0.0;
   real_t t_ref = 1.0;
   real_t dt = -0.005; // units tbd
+  real_t dx = 0.0002;
 
   // file for writing
   std::ofstream fout;
@@ -41,7 +42,9 @@ int main(int argc, char **argv)
     {1, "Standard FRW"},
     {2, "Interpolated FRW"},
     {3, "Sinusoid spacetime"},
-    {4, "Interpolated Sinusoid"}
+    {4, "Interpolated Sinusoid"},
+    {5, "Kasner spacetime"},
+    {6, "Interpolated Kasner"}
   };
   int test_type = 0;
   std::cout << "\n Enter test simulation type: \n";
@@ -67,7 +70,7 @@ int main(int argc, char **argv)
 
   // create "ray", initialize with above ICs
   cosmo::RayTrace<real_t, int> * ray;
-  ray = new cosmo::RayTrace<real_t, int> (dt, rd);
+  ray = new cosmo::RayTrace<real_t, int> (dt, dx, rd);
 
   // evolve ray
   std::cout << "Running...";
@@ -75,23 +78,35 @@ int main(int argc, char **argv)
   {
 
     // set background spacetime properties according to test_type
-    real_t L = 1.0;
-    real_t dx = 0.0002;
-    real_t eps0 = 0.1;
-    real_t x = ray->getRayX(1);
-    real_t x0 = dx*std::floor(x/dx);
-    real_t x1 = dx*std::ceil(x/dx);
+
+    // FRW parameters
     real_t a = std::pow( t, 2.0/3.0 );
     real_t H = 2.0/3.0/t;
+    // Sinusoid Spacetime parameters
+    real_t L = 1.0;
+    real_t eps0 = 0.1;
+    // Kasner parameters
+    real_t px = 2.0/3.0, py = 2.0/3.0, pz = -1.0/3.0;
+
+    // Ray position
+    real_t x = ray->getRayX(1);
 
     cosmo::RaytracePrimitives<real_t> rp = {0};
     struct cosmo::RaytracePrimitives<real_t> corner_rp[2][2][2];
     switch (test_type)
     {
-      case 4:
-        cosmo::setSinusoidRayCorners(x0, x1, L, eps0, corner_rp);
+      case 6:
+        cosmo::setKasnerRayCornerPrimitives(px, py, pz, t, corner_rp);
         ray->copyInCornerPrimitives(corner_rp);
-        ray->setRayX_d(dx);
+        ray->interpolatePrimitives();
+        break;
+      case 5:
+        rp = cosmo::getKasnerRayData(px, py, pz, t);
+        ray->setPrimitives(rp);
+        break;
+      case 4:
+        cosmo::setSinusoidRayCornerPrimitives(x, dx, L, eps0, corner_rp);
+        ray->copyInCornerPrimitives(corner_rp);
         ray->interpolatePrimitives();
         break;
       case 3:
@@ -99,7 +114,7 @@ int main(int argc, char **argv)
         ray->setPrimitives(rp);
         break;
       case 2:
-        cosmo::setFRWRayCorners(a, H, corner_rp);
+        cosmo::setFRWRayCornerPrimitives(a, H, corner_rp);
         ray->copyInCornerPrimitives(corner_rp);
         ray->interpolatePrimitives();
         break;
