@@ -1,6 +1,7 @@
 #include "raytrace.h"
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <map>  
 #include <cmath>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <iomanip>
 #include <limits>
 #include <iostream>
+#include <zlib.h>
 
 typedef double real_t;
 
@@ -17,24 +19,26 @@ int main(int argc, char **argv)
   real_t t_start = 4.0;
   real_t t_end = 0.0;
   real_t t_ref = 1.0;
-  real_t dt = -0.005; // units tbd
+  real_t dt = -0.00001; // units tbd
   real_t dx = 0.0002;
 
   // file for writing
-  std::ofstream fout;
+  gzFile datafile;
+  std::string filename = "output/RayTrace.dat.gz";
   mkdir("output", 0755);
-  if(std::ifstream("output/RayTrace.dat"))
+  if(std::ifstream(filename))
   {
     int s=1;
     while(std::ifstream(
-        "output/RayTrace." + std::to_string(s) + ".dat"
+        "output/RayTrace." + std::to_string(s) + ".dat.gz"
       ))
       s += 1;
-    fout.open("output/RayTrace." + std::to_string(s) + ".dat");
+    filename = "output/RayTrace." + std::to_string(s) + ".dat.gz";
+    datafile = gzopen(filename.c_str(), "ab");
   }
   else
   {
-    fout.open("output/RayTrace.dat");
+    datafile = gzopen(filename.c_str(), "ab");
   }
 
   // Type of spacetime for testing
@@ -56,10 +60,12 @@ int main(int argc, char **argv)
   // Initial conditions
   cosmo::RaytraceData<real_t> rd = {0};
     // Direction of propagation (will be normalized during sim.)
-    real_t a_start = std::pow( t_start, 2.0/3.0 );
-    rd.V[0] = 0.2 / a_start;
-    rd.V[1] = 0.6 / a_start;
-    rd.V[2] = std::sqrt( 1.0 - rd.V[0]*rd.V[0] - rd.V[1]*rd.V[1] ) / a_start;
+    rd.V[0] = 1.0/std::sqrt(2);
+    rd.V[1] = 0.0;
+    real_t V2 = rd.V[0]*rd.V[0] + rd.V[1]*rd.V[1];
+    if(V2 > 1.0)
+      V2 = 1.0;
+    rd.V[2] = std::sqrt( 1.0 - V2 );
     // energy in arb. untis
     rd.E = 1.0;
     // Initial 
@@ -125,7 +131,6 @@ int main(int argc, char **argv)
         break;
     }
 
-
     // evolve ray
     ray->setDerivedQuantities();
     ray->evolveRay();
@@ -133,32 +138,27 @@ int main(int argc, char **argv)
 
     // print ray information
     rd = ray->getRaytraceData();
-    // std::cout << "Ray is at X = ("
-    //           << ray->getRayX(1) << ", "
-    //           << ray->getRayX(2) << ", "
-    //           << ray->getRayX(3)
-    //           << ") with velocity V = ("
-    //           << rd.V[0] << ", "
-    //           << rd.V[1] << ", "
-    //           << rd.V[2]
-    //           << ") and E = "
-    //           << rd.E
-    //           << "\n";
-    // std::cout << "{" << ray->getRayX(1) << "," << rd.V[0] << "},";
-    
-    fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
-         << rd.ell << '\t'
-         << rd.Phi << '\t'
-         << rd.E << '\t'
-         << rd.V[iIDX(1)]*rd.V[iIDX(1)] + rd.V[iIDX(2)]*rd.V[iIDX(2)] + rd.V[iIDX(3)]*rd.V[iIDX(3)] << '\t'
-         << a << '\t'
-         << t << '\t'
-         << ray->WeylLensingScalarSum_Re() << '\t'
-         << ray->WeylLensingScalarSum_Im() << '\n';
+    char data_str[35];
 
+    sprintf(data_str, "%.15g\t", (double) t);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) a);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) (rd.V[iIDX(1)]*rd.V[iIDX(1)] + rd.V[iIDX(2)]*rd.V[iIDX(2)] + rd.V[iIDX(3)]*rd.V[iIDX(3)]) );
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) rd.E);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) rd.ell);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) rd.Phi);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) rd.sig_Re);
+    gzwrite(datafile, data_str, strlen(data_str));
+    sprintf(data_str, "%.15g\t", (double) rd.sig_Im);
+    gzwrite(datafile, data_str, strlen(data_str));
   }
   std::cout << " done.\n";
-  fout.close();
+  gzclose(datafile);
 
   return 0;
 }

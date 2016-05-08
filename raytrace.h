@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <limits>
 #include <iostream>
+#include <random>
 
 namespace cosmo
 {
@@ -253,24 +254,122 @@ class RayTrace
       return -0.5*2.0*( WeylLensingScalarSum(1, 2) + WeylLensingScalarSum(2, 1) );
     }
 
+    void normalizeVelocity()
+    {
+      RT magV = std::sqrt(
+            rp.g[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
+            + 2.0*(rp.g[aIDX(1,2)]*rd.V[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*rd.V[iIDX(2)]*rd.V[iIDX(3)])
+        );
+
+      for(int i=1; i<=3; i++)
+      {
+        rd.V[iIDX(i)] /= magV;
+      }
+    }
+
+    void initializeScreenVectors()
+    {
+      // try to make a good guess for initial screen vectors
+      RT new_S1[3], new_S2[3];
+
+      // S_A is spatial, _|_ V
+      RT s1b[3] = {0.0, 1.0, 0.0}; // basis vector for S1
+      RT s2b[3] = {1.0, 0.0, 0.0}; // basis vector for S2
+
+      // special case if in x- or y-direction; or x-y plane
+      if(std::abs(rd.V[2]) <= 1e-10 && std::abs(rd.V[1]) <= 1e-10)
+      {
+        s2b[2] = 1.0;
+        s2b[0] = 0.0;
+      }
+      else if(std::abs(rd.V[2]) <= 1e-10 && std::abs(rd.V[0]) <= 1e-10)
+      {
+        s1b[2] = 1.0;
+        s1b[1] = 0.0;
+      }
+      else
+      {
+        // if V is in x-y plane, pick vectors out of that plane
+        if(std::abs(rd.V[2]) <= 1e-10) { s1b[2] = 1.0; s2b[2] = 1.0; }
+        // if V is in x-z plane, pick vectors out of that plane
+        if(std::abs(rd.V[1]) <= 1e-10) { s2b[1] = 1.0; }
+        // if V is in y-z plane, pick vectors out of that plane
+        if(std::abs(rd.V[0]) <= 1e-10) { s1b[0] = 1.0; }
+      }
+
+      // store result in S1, S2
+      for(int i=0; i<3; i++)
+      {
+        rd.S1[i] = new_S1[i];
+        rd.S2[i] = new_S2[i];
+      }
+
+      return;
+    }
+
+    void orthonormalizeScreenVectors()
+    {
+      RT new_S1[3], new_S2[3];
+      RT s1b[3] = {rd.S1[0], rd.S1[1], rd.S1[2]}; // temporary basis vector for S1
+      RT s2b[3] = {rd.S2[0], rd.S2[1], rd.S2[2]}; // temporary basis vector for S2
+
+      // subtract out part of s1 along V & normalize
+      for(int i=1; i<=3; i++)
+      {
+        new_S1[iIDX(i)] = s1b[iIDX(i)] - (
+            rp.g[aIDX(1,1)]*s1b[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*s1b[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*s1b[iIDX(3)]*rd.V[iIDX(3)]
+            + rp.g[aIDX(1,2)]*s1b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s1b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s1b[iIDX(2)]*rd.V[iIDX(3)]
+            + rp.g[aIDX(1,2)]*s1b[iIDX(2)]*rd.V[iIDX(1)] + rp.g[aIDX(1,3)]*s1b[iIDX(3)]*rd.V[iIDX(1)] + rp.g[aIDX(2,3)]*s1b[iIDX(3)]*rd.V[iIDX(2)]
+          )*rd.V[iIDX(i)];
+      }
+      RT mags1 = std::sqrt(
+            rp.g[aIDX(1,1)]*new_S1[iIDX(1)]*new_S1[iIDX(1)] + rp.g[aIDX(2,2)]*new_S1[iIDX(2)]*new_S1[iIDX(2)] + rp.g[aIDX(3,3)]*new_S1[iIDX(3)]*new_S1[iIDX(3)]
+            + 2.0*(rp.g[aIDX(1,2)]*new_S1[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*new_S1[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*new_S1[iIDX(2)]*new_S1[iIDX(3)])
+        );
+      for(int i=1; i<=3; i++)
+      {
+        new_S1[iIDX(i)] /= mags1;
+      }
+
+      // subtract out part of s2 along V & s1
+      for(int i=1; i<=3; i++)
+      {
+        new_S2[iIDX(i)] = s2b[iIDX(i)] - (
+            rp.g[aIDX(1,1)]*s2b[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*s2b[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*s2b[iIDX(3)]*rd.V[iIDX(3)]
+            + 2.0*(rp.g[aIDX(1,2)]*s2b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s2b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s2b[iIDX(2)]*rd.V[iIDX(3)])
+          )*rd.V[iIDX(i)] - (
+            rp.g[aIDX(1,1)]*s2b[iIDX(1)]*new_S1[iIDX(1)] + rp.g[aIDX(2,2)]*s2b[iIDX(2)]*new_S1[iIDX(2)] + rp.g[aIDX(3,3)]*s2b[iIDX(3)]*new_S1[iIDX(3)]
+            + 2.0*(rp.g[aIDX(1,2)]*s2b[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*s2b[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*s2b[iIDX(2)]*new_S1[iIDX(3)])
+          )*new_S1[iIDX(i)];
+      }
+      RT mags2 = std::sqrt(
+            rp.g[aIDX(1,1)]*new_S2[iIDX(1)]*new_S2[iIDX(1)] + rp.g[aIDX(2,2)]*new_S2[iIDX(2)]*new_S2[iIDX(2)] + rp.g[aIDX(3,3)]*new_S2[iIDX(3)]*new_S2[iIDX(3)]
+            + 2.0*(rp.g[aIDX(1,2)]*new_S2[iIDX(1)]*new_S2[iIDX(2)] + rp.g[aIDX(1,3)]*new_S2[iIDX(1)]*new_S2[iIDX(3)] + rp.g[aIDX(2,3)]*new_S2[iIDX(2)]*new_S2[iIDX(3)])
+        );
+      for(int i=1; i<=3; i++)
+      {
+        new_S2[iIDX(i)] /= mags2;
+      }
+
+      // store result in S1, S2
+      for(int i=0; i<3; i++)
+      {
+        rd.S1[i] = new_S1[i];
+        rd.S2[i] = new_S2[i];
+      }
+
+      return;
+    }
+
     // evolve ray; simple eulerian integration for now.
     void evolveRay()
     {
       // General raytracing; non-angular-diameter-distance calcs
-      RT ev_E, ev_x[3], ev_V[3], ev_Phi, ev_ell, ev_sig_Re, ev_sig_Im;
-      RT new_S1[3], new_S2[3];
+      RT ev_E, ev_x[3], ev_V[3], ev_Phi, ev_ell, ev_sig_Re, ev_sig_Im, ev_S1[3], ev_S2[3];
+      normalizeVelocity();
+      orthonormalizeScreenVectors();
 
-      // normalize V
-        RT magV = std::sqrt(
-              rp.g[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
-              + 2.0*(rp.g[aIDX(1,2)]*rd.V[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*rd.V[iIDX(2)]*rd.V[iIDX(3)])
-          );
-        for(int i=1; i<=3; i++)
-        {
-          rd.V[iIDX(i)] /= magV;
-        }
-
-      // evolve Energy
+      // Energy
       ev_E = rd.E*(
           /* K_{ij} * V^{i} * V^{j} */
           rp.K[aIDX(1,1)]*rd.V[iIDX(1)]*rd.V[iIDX(1)] + rp.K[aIDX(2,2)]*rd.V[iIDX(2)]*rd.V[iIDX(2)] + rp.K[aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
@@ -299,13 +398,29 @@ class RayTrace
               - rp.G[iIDX(i)][aIDX(3,2)]*rd.V[iIDX(3)]*rd.V[iIDX(2)]
               - rp.G[iIDX(i)][aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
           );
-      }
 
-      // Evolution of angular diameter distance quantities
-      // necessary vars for evolving
-      RT R_optical = RicciLensingScalarSum();
-      RT W_optical_Re = WeylLensingScalarSum_Re();
-      RT W_optical_Im = WeylLensingScalarSum_Im();
+        // screen vectors (re-use transport term from V evolution)
+        ev_S1[iIDX(i)] = rd.V[iIDX(i)]*(
+            rd.S1[iIDX(1)]*rp.g[aIDX(1,1)]*ev_V[iIDX(1)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,1)]*ev_V[iIDX(1)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,1)]*ev_V[iIDX(1)]
+            + rd.S1[iIDX(1)]*rp.g[aIDX(1,2)]*ev_V[iIDX(2)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,2)]*ev_V[iIDX(2)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,2)]*ev_V[iIDX(2)]
+            + rd.S1[iIDX(1)]*rp.g[aIDX(1,3)]*ev_V[iIDX(3)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,3)]*ev_V[iIDX(3)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,3)]*ev_V[iIDX(3)]
+            -2.0*(
+              rd.S1[iIDX(1)]*rp.K[aIDX(1,1)]*rd.V[iIDX(1)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,1)]*rd.V[iIDX(1)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,1)]*rd.V[iIDX(1)]
+              + rd.S1[iIDX(1)]*rp.K[aIDX(1,2)]*rd.V[iIDX(2)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,2)]*rd.V[iIDX(2)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,2)]*rd.V[iIDX(2)]
+              + rd.S1[iIDX(1)]*rp.K[aIDX(1,3)]*rd.V[iIDX(3)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,3)]*rd.V[iIDX(3)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,3)]*rd.V[iIDX(3)]
+            )
+          );
+        ev_S2[iIDX(i)] = rd.V[iIDX(i)]*(
+            rd.S2[iIDX(1)]*rp.g[aIDX(1,1)]*ev_V[iIDX(1)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,1)]*ev_V[iIDX(1)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,1)]*ev_V[iIDX(1)]
+            + rd.S2[iIDX(1)]*rp.g[aIDX(1,2)]*ev_V[iIDX(2)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,2)]*ev_V[iIDX(2)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,2)]*ev_V[iIDX(2)]
+            + rd.S2[iIDX(1)]*rp.g[aIDX(1,3)]*ev_V[iIDX(3)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,3)]*ev_V[iIDX(3)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,3)]*ev_V[iIDX(3)]
+            -2.0*(
+              rd.S2[iIDX(1)]*rp.K[aIDX(1,1)]*rd.V[iIDX(1)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,1)]*rd.V[iIDX(1)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,1)]*rd.V[iIDX(1)]
+              + rd.S2[iIDX(1)]*rp.K[aIDX(1,2)]*rd.V[iIDX(2)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,2)]*rd.V[iIDX(2)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,2)]*rd.V[iIDX(2)]
+              + rd.S2[iIDX(1)]*rp.K[aIDX(1,3)]*rd.V[iIDX(3)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,3)]*rd.V[iIDX(3)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,3)]*rd.V[iIDX(3)]
+            )
+          );
+      }
 
       if(rd.ell == 0)
       {
@@ -313,67 +428,19 @@ class RayTrace
       }
       else
       {
+        RT R_optical = RicciLensingScalarSum();
         ev_Phi = 1.0/rd.E*rd.ell*(
-            R_optical - rd.sig_Re*rd.sig_Re/rd.ell/rd.ell/rd.ell/rd.ell
-                      - rd.sig_Im*rd.sig_Im/rd.ell/rd.ell/rd.ell/rd.ell
+            R_optical - ( rd.sig_Re*rd.sig_Re + rd.sig_Im*rd.sig_Im )/rd.ell/rd.ell/rd.ell/rd.ell
           );
       }
 
       ev_ell = 1.0/rd.E*rd.Phi;
-
+      
+      RT W_optical_Re = WeylLensingScalarSum_Re();
       ev_sig_Re = 1.0/rd.E*rd.ell*rd.ell*W_optical_Re;
 
+      RT W_optical_Im = WeylLensingScalarSum_Im();
       ev_sig_Im = 1.0/rd.E*rd.ell*rd.ell*W_optical_Im;
-
-      // Evolve shear rate variable
-      // S_A is spatial, _|_ V
-      // Basic Gram–Schmidt to get an S1 and S2
-      RT s1b[3] = {0.0, 1.0, 0.5}; // basis vector for S1
-      RT s2b[3] = {1.0, 0.5, 0.0}; // basis vector for S2
-      // if V is in x-y plane, pick vectors out of that plane
-      if(rd.V[2] == 0.0) { s1b[2] = 1.0; s2b[2] = 1.0; }
-      // if V is in x-z plane, pick vectors out of that plane
-      if(rd.V[1] == 0.0) { s2b[1] = 1.0; }
-      // if V is in y-z plane, pick vectors out of that plane
-      if(rd.V[0] == 0.0) { s1b[0] = 1.0; }
-
-      // subtract out part of s1 along V & normalize
-        for(int i=1; i<=3; i++)
-        {
-          new_S1[iIDX(i)] = s1b[iIDX(i)] - (
-              rp.g[aIDX(1,1)]*s1b[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*s1b[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*s1b[iIDX(3)]*rd.V[iIDX(3)]
-              + rp.g[aIDX(1,2)]*s1b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s1b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s1b[iIDX(2)]*rd.V[iIDX(3)]
-              + rp.g[aIDX(1,2)]*s1b[iIDX(2)]*rd.V[iIDX(1)] + rp.g[aIDX(1,3)]*s1b[iIDX(3)]*rd.V[iIDX(1)] + rp.g[aIDX(2,3)]*s1b[iIDX(3)]*rd.V[iIDX(2)]
-            )*rd.V[iIDX(i)];
-        }
-        RT mags1 = std::sqrt(
-              rp.g[aIDX(1,1)]*new_S1[iIDX(1)]*new_S1[iIDX(1)] + rp.g[aIDX(2,2)]*new_S1[iIDX(2)]*new_S1[iIDX(2)] + rp.g[aIDX(3,3)]*new_S1[iIDX(3)]*new_S1[iIDX(3)]
-              + 2.0*(rp.g[aIDX(1,2)]*new_S1[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*new_S1[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*new_S1[iIDX(2)]*new_S1[iIDX(3)])
-          );
-        for(int i=1; i<=3; i++)
-        {
-          new_S1[iIDX(i)] /= mags1;
-        }
-
-      // subtract out part of s2 along V & s1
-        for(int i=1; i<=3; i++)
-        {
-          new_S2[iIDX(i)] = s2b[iIDX(i)] - (
-              rp.g[aIDX(1,1)]*s2b[iIDX(1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*s2b[iIDX(2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*s2b[iIDX(3)]*rd.V[iIDX(3)]
-              + 2.0*(rp.g[aIDX(1,2)]*s2b[iIDX(1)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*s2b[iIDX(1)]*rd.V[iIDX(3)] + rp.g[aIDX(2,3)]*s2b[iIDX(2)]*rd.V[iIDX(3)])
-            )*rd.V[iIDX(i)] - (
-              rp.g[aIDX(1,1)]*s2b[iIDX(1)]*new_S1[iIDX(1)] + rp.g[aIDX(2,2)]*s2b[iIDX(2)]*new_S1[iIDX(2)] + rp.g[aIDX(3,3)]*s2b[iIDX(3)]*new_S1[iIDX(3)]
-              + 2.0*(rp.g[aIDX(1,2)]*s2b[iIDX(1)]*new_S1[iIDX(2)] + rp.g[aIDX(1,3)]*s2b[iIDX(1)]*new_S1[iIDX(3)] + rp.g[aIDX(2,3)]*s2b[iIDX(2)]*new_S1[iIDX(3)])
-            )*new_S1[iIDX(i)];
-        }
-        RT mags2 = std::sqrt(
-              rp.g[aIDX(1,1)]*new_S2[iIDX(1)]*new_S2[iIDX(1)] + rp.g[aIDX(2,2)]*new_S2[iIDX(2)]*new_S2[iIDX(2)] + rp.g[aIDX(3,3)]*new_S2[iIDX(3)]*new_S2[iIDX(3)]
-              + 2.0*(rp.g[aIDX(1,2)]*new_S2[iIDX(1)]*new_S2[iIDX(2)] + rp.g[aIDX(1,3)]*new_S2[iIDX(1)]*new_S2[iIDX(3)] + rp.g[aIDX(2,3)]*new_S2[iIDX(2)]*new_S2[iIDX(3)])
-          );
-        for(int i=1; i<=3; i++)
-        {
-          new_S2[iIDX(i)] /= mags2;
-        }
 
       // compute evolved values (simple Eulerian integration for now...)
       rd.E += sim_dt*ev_E;
@@ -385,8 +452,8 @@ class RayTrace
       {
         rd.x[i] += sim_dt*ev_x[i];
         rd.V[i] += sim_dt*ev_V[i];
-        rd.S1[i] = new_S1[i];
-        rd.S2[i] = new_S2[i];
+        rd.S1[i] += sim_dt*ev_S1[i];
+        rd.S2[i] += sim_dt*ev_S2[i];
       }
 
     } // evolveRay
