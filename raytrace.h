@@ -71,6 +71,7 @@ class RayTrace
       sim_dt = sim_dt_in;
       sim_dx = sim_dx_in;
       rd = rd_in;
+      initializeScreenVectors();
       return;
     }
 
@@ -270,8 +271,6 @@ class RayTrace
     void initializeScreenVectors()
     {
       // try to make a good guess for initial screen vectors
-      RT new_S1[3], new_S2[3];
-
       // S_A is spatial, _|_ V
       RT s1b[3] = {0.0, 1.0, 0.0}; // basis vector for S1
       RT s2b[3] = {1.0, 0.0, 0.0}; // basis vector for S2
@@ -300,8 +299,8 @@ class RayTrace
       // store result in S1, S2
       for(int i=0; i<3; i++)
       {
-        rd.S1[i] = new_S1[i];
-        rd.S2[i] = new_S2[i];
+        rd.S1[i] = s1b[i];
+        rd.S2[i] = s2b[i];
       }
 
       return;

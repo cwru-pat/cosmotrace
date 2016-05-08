@@ -15,13 +15,6 @@ typedef double real_t;
 
 int main(int argc, char **argv)
 {
-  // run time
-  real_t t_start = 4.0;
-  real_t t_end = 0.0;
-  real_t t_ref = 1.0;
-  real_t dt = -0.00001; // units tbd
-  real_t dx = 0.0002;
-
   // file for writing
   gzFile datafile;
   std::string filename = "output/RayTrace.dat.gz";
@@ -57,10 +50,17 @@ int main(int argc, char **argv)
   std::cout << " > ";
   std::cin >> test_type;
 
+  // run time
+  real_t t_start = 4.0;
+  real_t t_end = 0.0;
+  real_t t_ref = 1.0;
+  real_t dt = -0.00025; // units tbd
+  real_t dx = -10.0*dt;
+
   // Initial conditions
   cosmo::RaytraceData<real_t> rd = {0};
     // Direction of propagation (will be normalized during sim.)
-    rd.V[0] = 1.0/std::sqrt(2);
+    rd.V[0] = 1.0/std::sqrt(2.0);
     rd.V[1] = 0.0;
     real_t V2 = rd.V[0]*rd.V[0] + rd.V[1]*rd.V[1];
     if(V2 > 1.0)
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     rd.V[2] = std::sqrt( 1.0 - V2 );
     // energy in arb. untis
     rd.E = 1.0;
-    // Initial 
+    // Initial beam parameters
     rd.Phi = 1.0;
     rd.ell = 0.0;
     rd.sig_Re = 0.0;
@@ -89,8 +89,8 @@ int main(int argc, char **argv)
     real_t a = std::pow( t, 2.0/3.0 );
     real_t H = 2.0/3.0/t;
     // Sinusoid Spacetime parameters
-    real_t L = 1.0;
-    real_t eps0 = 0.1;
+    real_t L = 0.2;
+    real_t eps0 = 0.2;
     // Kasner parameters
     real_t px = 2.0/3.0, py = 2.0/3.0, pz = -1.0/3.0;
 
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     gzwrite(datafile, data_str, strlen(data_str));
     sprintf(data_str, "%.15g\t", (double) rd.sig_Re);
     gzwrite(datafile, data_str, strlen(data_str));
-    sprintf(data_str, "%.15g\t", (double) rd.sig_Im);
+    sprintf(data_str, "%.15g\n", (double) rd.sig_Im);
     gzwrite(datafile, data_str, strlen(data_str));
   }
   std::cout << " done.\n";
