@@ -49,6 +49,9 @@ struct RaytraceData {
   // sachs scalar sigma
   RT sig_Re;
   RT sig_Im;
+
+  // Keep track of this for weighting averages
+  RT rho;
 };
 
 } // namespace cosmo

@@ -398,64 +398,65 @@ class RayTrace
               - rp.G[iIDX(i)][aIDX(3,3)]*rd.V[iIDX(3)]*rd.V[iIDX(3)]
           );
 
+        // lowered velocity vectors
+        real_t V_1 = rp.g[aIDX(1,1)]*rd.V[iIDX(1)] + rp.g[aIDX(1,2)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(3)];
+        real_t V_2 = rp.g[aIDX(2,1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)] + rp.g[aIDX(2,3)]*rd.V[iIDX(3)];
+        real_t V_3 = rp.g[aIDX(3,1)]*rd.V[iIDX(1)] + rp.g[aIDX(3,2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)];
+        // V_j V^k \Gamma^j_{ki} for a free index i
+        real_t VjVkGjk1 = (
+                V_1*rp.G[iIDX(1)][aIDX(1,1)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,1)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,1)]*rd.V[iIDX(1)]
+                + V_1*rp.G[iIDX(1)][aIDX(2,1)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,1)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,1)]*rd.V[iIDX(2)]
+                + V_1*rp.G[iIDX(1)][aIDX(3,1)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,1)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,1)]*rd.V[iIDX(3)]
+              );
+        real_t VjVkGjk2 = (
+                V_1*rp.G[iIDX(1)][aIDX(1,2)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,2)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,2)]*rd.V[iIDX(1)]
+                + V_1*rp.G[iIDX(1)][aIDX(2,2)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,2)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,2)]*rd.V[iIDX(2)]
+                + V_1*rp.G[iIDX(1)][aIDX(3,2)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,2)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,2)]*rd.V[iIDX(3)]
+              );
+        real_t VjVkGjk3 = (
+                V_1*rp.G[iIDX(1)][aIDX(1,3)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,3)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,3)]*rd.V[iIDX(1)]
+                + V_1*rp.G[iIDX(1)][aIDX(2,3)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,3)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,3)]*rd.V[iIDX(2)]
+                + V_1*rp.G[iIDX(1)][aIDX(3,3)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,3)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,3)]*rd.V[iIDX(3)]
+              );
+
         // screen vectors (re-use transport term from V evolution)
         ev_S1[iIDX(i)] = rd.V[iIDX(i)]*(
             rd.S1[iIDX(1)]*rp.g[aIDX(1,1)]*ev_V[iIDX(1)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,1)]*ev_V[iIDX(1)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,1)]*ev_V[iIDX(1)]
             + rd.S1[iIDX(1)]*rp.g[aIDX(1,2)]*ev_V[iIDX(2)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,2)]*ev_V[iIDX(2)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,2)]*ev_V[iIDX(2)]
             + rd.S1[iIDX(1)]*rp.g[aIDX(1,3)]*ev_V[iIDX(3)] + rd.S1[iIDX(2)]*rp.g[aIDX(2,3)]*ev_V[iIDX(3)] + rd.S1[iIDX(3)]*rp.g[aIDX(3,3)]*ev_V[iIDX(3)]
-            -2.0*(
+            -3.0*(
               rd.S1[iIDX(1)]*rp.K[aIDX(1,1)]*rd.V[iIDX(1)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,1)]*rd.V[iIDX(1)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,1)]*rd.V[iIDX(1)]
               + rd.S1[iIDX(1)]*rp.K[aIDX(1,2)]*rd.V[iIDX(2)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,2)]*rd.V[iIDX(2)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,2)]*rd.V[iIDX(2)]
               + rd.S1[iIDX(1)]*rp.K[aIDX(1,3)]*rd.V[iIDX(3)] + rd.S1[iIDX(2)]*rp.K[aIDX(2,3)]*rd.V[iIDX(3)] + rd.S1[iIDX(3)]*rp.K[aIDX(3,3)]*rd.V[iIDX(3)]
             )
-            + rd.V[iIDX(1)]*(
-                rp.G[iIDX(1)][aIDX(1,1)]*rd.S1[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(1,2)]*rd.S1[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(1,3)]*rd.S1[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(1)][aIDX(2,1)]*rd.S1[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(2,2)]*rd.S1[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(2,3)]*rd.S1[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(1)][aIDX(3,1)]*rd.S1[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(3,2)]*rd.S1[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(3,3)]*rd.S1[iIDX(3)]*rd.V[iIDX(3)]
-              )
-            + rd.V[iIDX(2)]*(
-                rp.G[iIDX(2)][aIDX(1,1)]*rd.S1[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(1,2)]*rd.S1[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(1,3)]*rd.S1[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(2)][aIDX(2,1)]*rd.S1[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(2,2)]*rd.S1[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(2,3)]*rd.S1[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(2)][aIDX(3,1)]*rd.S1[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(3,2)]*rd.S1[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(3,3)]*rd.S1[iIDX(3)]*rd.V[iIDX(3)]
-              )
-            + rd.V[iIDX(3)]*(
-                rp.G[iIDX(3)][aIDX(1,1)]*rd.S1[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(1,2)]*rd.S1[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(1,3)]*rd.S1[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(3)][aIDX(2,1)]*rd.S1[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(2,2)]*rd.S1[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(2,3)]*rd.S1[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(3)][aIDX(3,1)]*rd.S1[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(3,2)]*rd.S1[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(3,3)]*rd.S1[iIDX(3)]*rd.V[iIDX(3)]
-              )
+            + rd.S1[iIDX(1)]*VjVkGjk1 + rd.S1[iIDX(2)]*VjVkGjk2 + rd.S1[iIDX(3)]*VjVkGjk3
           ) - (
             rp.G[iIDX(i)][aIDX(1,1)]*rd.S1[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(1,2)]*rd.S1[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(1,3)]*rd.S1[iIDX(1)]*rd.V[iIDX(3)]
             + rp.G[iIDX(i)][aIDX(2,1)]*rd.S1[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(2,2)]*rd.S1[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(2,3)]*rd.S1[iIDX(2)]*rd.V[iIDX(3)]
             + rp.G[iIDX(i)][aIDX(3,1)]*rd.S1[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(3,2)]*rd.S1[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(3,3)]*rd.S1[iIDX(3)]*rd.V[iIDX(3)]
+          ) + (
+            rp.gi[aIDX(i,1)]*rp.K[aIDX(1,1)]*rd.S1[iIDX(1)] + rp.gi[aIDX(i,1)]*rp.K[aIDX(1,2)]*rd.S1[iIDX(2)]aIDX + rp.gi[aIDX(i,1)]*rp.K[aIDX(1,3)]*rd.S1[iIDX(3)]
+            + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,1)]*rd.S1[iIDX(1)] + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,2)]*rd.S1[iIDX(2)]aIDX + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,3)]*rd.S1[iIDX(3)]
+            + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,1)]*rd.S1[iIDX(1)] + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,2)]*rd.S1[iIDX(2)]aIDX + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,3)]*rd.S1[iIDX(3)]
           );
         ev_S2[iIDX(i)] = rd.V[iIDX(i)]*(
             rd.S2[iIDX(1)]*rp.g[aIDX(1,1)]*ev_V[iIDX(1)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,1)]*ev_V[iIDX(1)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,1)]*ev_V[iIDX(1)]
             + rd.S2[iIDX(1)]*rp.g[aIDX(1,2)]*ev_V[iIDX(2)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,2)]*ev_V[iIDX(2)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,2)]*ev_V[iIDX(2)]
             + rd.S2[iIDX(1)]*rp.g[aIDX(1,3)]*ev_V[iIDX(3)] + rd.S2[iIDX(2)]*rp.g[aIDX(2,3)]*ev_V[iIDX(3)] + rd.S2[iIDX(3)]*rp.g[aIDX(3,3)]*ev_V[iIDX(3)]
-            -2.0*(
+            -3.0*(
               rd.S2[iIDX(1)]*rp.K[aIDX(1,1)]*rd.V[iIDX(1)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,1)]*rd.V[iIDX(1)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,1)]*rd.V[iIDX(1)]
               + rd.S2[iIDX(1)]*rp.K[aIDX(1,2)]*rd.V[iIDX(2)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,2)]*rd.V[iIDX(2)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,2)]*rd.V[iIDX(2)]
               + rd.S2[iIDX(1)]*rp.K[aIDX(1,3)]*rd.V[iIDX(3)] + rd.S2[iIDX(2)]*rp.K[aIDX(2,3)]*rd.V[iIDX(3)] + rd.S2[iIDX(3)]*rp.K[aIDX(3,3)]*rd.V[iIDX(3)]
             )
-            + rd.V[iIDX(1)]*(
-                rp.G[iIDX(1)][aIDX(1,1)]*rd.S2[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(1,2)]*rd.S2[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(1,3)]*rd.S2[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(1)][aIDX(2,1)]*rd.S2[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(2,2)]*rd.S2[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(2,3)]*rd.S2[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(1)][aIDX(3,1)]*rd.S2[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(1)][aIDX(3,2)]*rd.S2[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(1)][aIDX(3,3)]*rd.S2[iIDX(3)]*rd.V[iIDX(3)]
-              )
-            + rd.V[iIDX(2)]*(
-                rp.G[iIDX(2)][aIDX(1,1)]*rd.S2[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(1,2)]*rd.S2[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(1,3)]*rd.S2[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(2)][aIDX(2,1)]*rd.S2[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(2,2)]*rd.S2[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(2,3)]*rd.S2[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(2)][aIDX(3,1)]*rd.S2[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(2)][aIDX(3,2)]*rd.S2[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(2)][aIDX(3,3)]*rd.S2[iIDX(3)]*rd.V[iIDX(3)]
-              )
-            + rd.V[iIDX(3)]*(
-                rp.G[iIDX(3)][aIDX(1,1)]*rd.S2[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(1,2)]*rd.S2[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(1,3)]*rd.S2[iIDX(1)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(3)][aIDX(2,1)]*rd.S2[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(2,2)]*rd.S2[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(2,3)]*rd.S2[iIDX(2)]*rd.V[iIDX(3)]
-                + rp.G[iIDX(3)][aIDX(3,1)]*rd.S2[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(3)][aIDX(3,2)]*rd.S2[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(3)][aIDX(3,3)]*rd.S2[iIDX(3)]*rd.V[iIDX(3)]
-              )
+            + rd.S2[iIDX(1)]*VjVkGjk1 + rd.S2[iIDX(2)]*VjVkGjk2 + rd.S2[iIDX(3)]*VjVkGjk3
           ) - (
             rp.G[iIDX(i)][aIDX(1,1)]*rd.S2[iIDX(1)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(1,2)]*rd.S2[iIDX(1)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(1,3)]*rd.S2[iIDX(1)]*rd.V[iIDX(3)]
             + rp.G[iIDX(i)][aIDX(2,1)]*rd.S2[iIDX(2)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(2,2)]*rd.S2[iIDX(3)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(2,3)]*rd.S2[iIDX(2)]*rd.V[iIDX(3)]
             + rp.G[iIDX(i)][aIDX(3,1)]*rd.S2[iIDX(3)]*rd.V[iIDX(1)] + rp.G[iIDX(i)][aIDX(3,2)]*rd.S2[iIDX(2)]*rd.V[iIDX(2)] + rp.G[iIDX(i)][aIDX(3,3)]*rd.S2[iIDX(3)]*rd.V[iIDX(3)]
+          ) + (
+            rp.gi[aIDX(i,1)]*rp.K[aIDX(1,1)]*rd.S2[iIDX(1)] + rp.gi[aIDX(i,1)]*rp.K[aIDX(1,2)]*rd.S2[iIDX(2)]aIDX + rp.gi[aIDX(i,1)]*rp.K[aIDX(1,3)]*rd.S2[iIDX(3)]
+            + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,1)]*rd.S2[iIDX(1)] + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,2)]*rd.S2[iIDX(2)]aIDX + rp.gi[aIDX(i,2)]*rp.K[aIDX(2,3)]*rd.S2[iIDX(3)]
+            + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,1)]*rd.S2[iIDX(1)] + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,2)]*rd.S2[iIDX(2)]aIDX + rp.gi[aIDX(i,3)]*rp.K[aIDX(3,3)]*rd.S2[iIDX(3)]
           );
       }
 
@@ -493,6 +494,7 @@ class RayTrace
         rd.S2[i] += sim_dt*ev_S2[i];
       }
 
+      rd.rho = rp.rho;
     } // evolveRay
 
 };
