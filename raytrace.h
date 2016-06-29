@@ -41,11 +41,11 @@ class RayTrace
     RT sim_dt, sim_dx;
 
   /* Evolved variables */
-    RaytraceData<RT> rd;
+    RaytraceData<RT> rd = {};
 
   /* "Primitive" variables used to calculate Riemann tensor components */
     // at point where ray is
-    RaytracePrimitives<RT> rp;
+    RaytracePrimitives<RT> rp = {};
     // at adjacent cells from a lattice
     struct RaytracePrimitives<RT> corner_rp[2][2][2];
 
