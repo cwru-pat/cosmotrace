@@ -37,27 +37,21 @@ namespace cosmo
 template <typename RT, typename IT>
 class RayTrace
 {
-  /* Simulation timestep */
-    RT sim_dt, sim_dx;
+  RT sim_dt, ///< Simulation timestep (can be negative)
+     sim_dx; ///< simulation grid spacing
 
-  /* Evolved variables */
-    RaytraceData<RT> rd = {};
+  RaytraceData<RT> rd = {}; ///< Structure storing evolved variables
 
   /* "Primitive" variables used to calculate Riemann tensor components */
-    // at point where ray is
-    RaytracePrimitives<RT> rp = {};
-    // at adjacent cells from a lattice
-    struct RaytracePrimitives<RT> corner_rp[2][2][2];
+  RaytracePrimitives<RT> rp = {}; ///< Metric primitives at ray location
+  struct RaytracePrimitives<RT> corner_rp[2][2][2]; ///< Metric primitives at adjacent gridpoints
 
   /* variables used for calculations at a given step, calculated from primitives */
-    // Riemann tensor components
-    RT R_1001, R_2002, R_3003, R_1212, R_1313, R_2323, R_1002,
-       R_1003, R_1012, R_1013, R_1023, R_2003, R_2012, R_2013,
-       R_2023, R_3012, R_3013, R_3023, R_1213, R_1223, R_1323;
+  RT R_1001, R_2002, R_3003, R_1212, R_1313, R_2323, R_1002,
+     R_1003, R_1012, R_1013, R_1023, R_2003, R_2012, R_2013,
+     R_2023, R_3012, R_3013, R_3023, R_1213, R_1223, R_1323;
 
-    // screen tensors
-    // indices run over {01, 02, 03, 12, 13, 23}
-    RT varSig1[6], varSig2[6];
+  VarSig<RT> varSig; ///< particular instance of screen tensor
 
   public:
     /**
@@ -195,19 +189,19 @@ class RayTrace
     void setScreenTensors()
     {
       // k^\mu = (E, E*V^i)
-      varSig1[0 /*[01]*/] = -0.5*rd.S1[iIDX(1)]*rd.E;
-      varSig1[1 /*[02]*/] = -0.5*rd.S1[iIDX(2)]*rd.E;
-      varSig1[2 /*[03]*/] = -0.5*rd.S1[iIDX(3)]*rd.E;
-      varSig1[3 /*[12]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
-      varSig1[4 /*[13]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
-      varSig1[5 /*[23]*/] = 0.5*( rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
+      varSig.SK1[0 /*[01]*/] = -0.5*rd.S1[iIDX(1)]*rd.E;
+      varSig.SK1[1 /*[02]*/] = -0.5*rd.S1[iIDX(2)]*rd.E;
+      varSig.SK1[2 /*[03]*/] = -0.5*rd.S1[iIDX(3)]*rd.E;
+      varSig.SK1[3 /*[12]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
+      varSig.SK1[4 /*[13]*/] = 0.5*( rd.S1[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
+      varSig.SK1[5 /*[23]*/] = 0.5*( rd.S1[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S1[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
 
-      varSig2[0 /*[01]*/] = -0.5*rd.S2[iIDX(1)]*rd.E;
-      varSig2[1 /*[02]*/] = -0.5*rd.S2[iIDX(2)]*rd.E;
-      varSig2[2 /*[03]*/] = -0.5*rd.S2[iIDX(3)]*rd.E;
-      varSig2[3 /*[12]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
-      varSig2[4 /*[13]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
-      varSig2[5 /*[23]*/] = 0.5*( rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
+      varSig.SK2[0 /*[01]*/] = -0.5*rd.S2[iIDX(1)]*rd.E;
+      varSig.SK2[1 /*[02]*/] = -0.5*rd.S2[iIDX(2)]*rd.E;
+      varSig.SK2[2 /*[03]*/] = -0.5*rd.S2[iIDX(3)]*rd.E;
+      varSig.SK2[3 /*[12]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(2)] - rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(1)] );
+      varSig.SK2[4 /*[13]*/] = 0.5*( rd.S2[iIDX(1)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(1)] );
+      varSig.SK2[5 /*[23]*/] = 0.5*( rd.S2[iIDX(2)]*rd.E*rd.V[iIDX(3)] - rd.S2[iIDX(3)]*rd.E*rd.V[iIDX(2)] );
     }
 
     void setRiemannComponents()
@@ -243,18 +237,31 @@ class RayTrace
       return -4.0*RAY_PI*rp.rho*rd.E*rd.E;
     }
 
+    /**
+     * @brief      Real part of Weyl optical scalar (difference of weyl
+     * lensing scalar summation terms)
+     *
+     * @return     \f$\mathcal{W}_{11}^{\Sigma} - \mathcal{W}_{22}^{\Sigma}\f$
+     */
     RT WeylLensingScalarSum_Re()
     {
-      // "W_11 - W_22"
-      return WeylLensingScalarSum(1,1) - WeylLensingScalarSum(2, 2);
+      return ( WEYL_LENSING_SCALAR_SUM(1, 1) - WEYL_LENSING_SCALAR_SUM(2, 2) );
     }
 
+    /**
+     * @brief      Imaginary part of Weyl optical scalar, (weyl lensing scalar
+     * summation terms symmetrized to help reduce roundoff)
+     *
+     * @return     \f$\frac{1}{2}(2\mathcal{W}_{12}^{\Sigma} + 2\mathcal{W}_{21}^{\Sigma})\f$
+     */
     RT WeylLensingScalarSum_Im()
     {
-      // symmetrize to help reduce roundoff
-      return -0.5*2.0*( WeylLensingScalarSum(1, 2) + WeylLensingScalarSum(2, 1) );
+      return -0.5*2.0*( WEYL_LENSING_SCALAR_SUM(1, 2) + WEYL_LENSING_SCALAR_SUM(2, 1) );
     }
 
+    /**
+     * @brief      Enforce normalization of photon velocity vector
+     */
     void normalizeVelocity()
     {
       RT magV = std::sqrt(
@@ -268,9 +275,11 @@ class RayTrace
       }
     }
 
+    /**
+     * @brief      try to make a good guess for initial screen vectors
+     */
     void initializeScreenVectors()
     {
-      // try to make a good guess for initial screen vectors
       // S_A is spatial, _|_ V
       RT s1b[3] = {0.0, 1.0, 0.0}; // basis vector for S1
       RT s2b[3] = {1.0, 0.0, 0.0}; // basis vector for S2
@@ -399,25 +408,25 @@ class RayTrace
           );
 
         // lowered velocity vectors
-        real_t V_1 = rp.g[aIDX(1,1)]*rd.V[iIDX(1)] + rp.g[aIDX(1,2)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(3)];
-        real_t V_2 = rp.g[aIDX(2,1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)] + rp.g[aIDX(2,3)]*rd.V[iIDX(3)];
-        real_t V_3 = rp.g[aIDX(3,1)]*rd.V[iIDX(1)] + rp.g[aIDX(3,2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)];
+        RT V_1 = rp.g[aIDX(1,1)]*rd.V[iIDX(1)] + rp.g[aIDX(1,2)]*rd.V[iIDX(2)] + rp.g[aIDX(1,3)]*rd.V[iIDX(3)];
+        RT V_2 = rp.g[aIDX(2,1)]*rd.V[iIDX(1)] + rp.g[aIDX(2,2)]*rd.V[iIDX(2)] + rp.g[aIDX(2,3)]*rd.V[iIDX(3)];
+        RT V_3 = rp.g[aIDX(3,1)]*rd.V[iIDX(1)] + rp.g[aIDX(3,2)]*rd.V[iIDX(2)] + rp.g[aIDX(3,3)]*rd.V[iIDX(3)];
         // V_j V^k \Gamma^j_{ki} for a free index i
-        real_t VjVkGjk1 = (
-                V_1*rp.G[iIDX(1)][aIDX(1,1)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,1)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,1)]*rd.V[iIDX(1)]
-                + V_1*rp.G[iIDX(1)][aIDX(2,1)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,1)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,1)]*rd.V[iIDX(2)]
-                + V_1*rp.G[iIDX(1)][aIDX(3,1)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,1)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,1)]*rd.V[iIDX(3)]
-              );
-        real_t VjVkGjk2 = (
-                V_1*rp.G[iIDX(1)][aIDX(1,2)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,2)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,2)]*rd.V[iIDX(1)]
-                + V_1*rp.G[iIDX(1)][aIDX(2,2)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,2)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,2)]*rd.V[iIDX(2)]
-                + V_1*rp.G[iIDX(1)][aIDX(3,2)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,2)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,2)]*rd.V[iIDX(3)]
-              );
-        real_t VjVkGjk3 = (
-                V_1*rp.G[iIDX(1)][aIDX(1,3)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,3)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,3)]*rd.V[iIDX(1)]
-                + V_1*rp.G[iIDX(1)][aIDX(2,3)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,3)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,3)]*rd.V[iIDX(2)]
-                + V_1*rp.G[iIDX(1)][aIDX(3,3)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,3)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,3)]*rd.V[iIDX(3)]
-              );
+        RT VjVkGjk1 = (
+              V_1*rp.G[iIDX(1)][aIDX(1,1)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,1)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,1)]*rd.V[iIDX(1)]
+              + V_1*rp.G[iIDX(1)][aIDX(2,1)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,1)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,1)]*rd.V[iIDX(2)]
+              + V_1*rp.G[iIDX(1)][aIDX(3,1)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,1)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,1)]*rd.V[iIDX(3)]
+            );
+        RT VjVkGjk2 = (
+              V_1*rp.G[iIDX(1)][aIDX(1,2)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,2)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,2)]*rd.V[iIDX(1)]
+              + V_1*rp.G[iIDX(1)][aIDX(2,2)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,2)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,2)]*rd.V[iIDX(2)]
+              + V_1*rp.G[iIDX(1)][aIDX(3,2)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,2)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,2)]*rd.V[iIDX(3)]
+            );
+        RT VjVkGjk3 = (
+              V_1*rp.G[iIDX(1)][aIDX(1,3)]*rd.V[iIDX(1)] + V_2*rp.G[iIDX(2)][aIDX(1,3)]*rd.V[iIDX(1)] + V_3*rp.G[iIDX(3)][aIDX(1,3)]*rd.V[iIDX(1)]
+              + V_1*rp.G[iIDX(1)][aIDX(2,3)]*rd.V[iIDX(2)] + V_2*rp.G[iIDX(2)][aIDX(2,3)]*rd.V[iIDX(2)] + V_3*rp.G[iIDX(3)][aIDX(2,3)]*rd.V[iIDX(2)]
+              + V_1*rp.G[iIDX(1)][aIDX(3,3)]*rd.V[iIDX(3)] + V_2*rp.G[iIDX(2)][aIDX(3,3)]*rd.V[iIDX(3)] + V_3*rp.G[iIDX(3)][aIDX(3,3)]*rd.V[iIDX(3)]
+            );
 
         // screen vectors (re-use transport term from V evolution)
         ev_S1[iIDX(i)] = rd.V[iIDX(i)]*(

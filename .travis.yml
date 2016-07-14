@@ -1,0 +1,15 @@
+
+language: cpp
+sudo: required
+dist: trusty
+
+git:
+  submodules: false
+
+install:
+ - pwd
+ - sudo apt-get -qq update
+ - gcc --version
+ - g++ --version
+
+script: run_tests.sh

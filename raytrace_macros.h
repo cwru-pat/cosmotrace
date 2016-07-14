@@ -53,29 +53,29 @@
     corner_rp[1][0][0].var, corner_rp[1][0][1].var, corner_rp[1][1][0].var, corner_rp[1][1][1].var \
   )
 
-#define WeylLensingScalarSum(A, B) ( \
+#define WEYL_LENSING_SCALAR_SUM(A, B) ( \
   -4.0*( \
-    - R_1001 * varSig##A[0 /*01*/] * varSig##B[0 /*01*/] \
-    - R_2002 * varSig##A[1 /*02*/] * varSig##B[1 /*02*/] \
-    - R_3003 * varSig##A[2 /*03*/] * varSig##B[2 /*03*/] \
-    + R_1212 * varSig##A[3 /*12*/] * varSig##B[3 /*12*/] \
-    + R_1313 * varSig##A[4 /*13*/] * varSig##B[4 /*13*/] \
-    + R_2323 * varSig##A[5 /*23*/] * varSig##B[5 /*23*/] \
-    - R_1002*( varSig##A[0 /*01*/]*varSig##B[1 /*02*/] + varSig##A[1 /*02*/]*varSig##B[0 /*01*/] ) \
-      - R_1003*( varSig##A[0 /*01*/]*varSig##B[2 /*03*/] + varSig##A[2 /*03*/]*varSig##B[0 /*01*/] ) \
-      - R_1012*( varSig##A[0 /*01*/]*varSig##B[3 /*12*/] + varSig##A[3 /*12*/]*varSig##B[0 /*01*/] ) \
-    - R_1013*( varSig##A[0 /*01*/]*varSig##B[4 /*13*/] + varSig##A[4 /*13*/]*varSig##B[0 /*01*/] ) \
-      - R_1023*( varSig##A[0 /*01*/]*varSig##B[5 /*23*/] + varSig##A[5 /*23*/]*varSig##B[0 /*01*/] ) \
-      - R_2003*( varSig##A[1 /*02*/]*varSig##B[2 /*03*/] + varSig##A[2 /*03*/]*varSig##B[1 /*02*/] ) \
-    - R_2012*( varSig##A[1 /*02*/]*varSig##B[3 /*12*/] + varSig##A[3 /*12*/]*varSig##B[1 /*02*/] ) \
-      - R_2013*( varSig##A[1 /*02*/]*varSig##B[4 /*13*/] + varSig##A[4 /*13*/]*varSig##B[1 /*02*/] ) \
-      - R_2023*( varSig##A[1 /*02*/]*varSig##B[5 /*23*/] + varSig##A[5 /*23*/]*varSig##B[1 /*02*/] ) \
-    - R_3012*( varSig##A[2 /*03*/]*varSig##B[3 /*12*/] + varSig##A[3 /*12*/]*varSig##B[2 /*03*/] ) \
-      - R_3013*( varSig##A[2 /*03*/]*varSig##B[4 /*13*/] + varSig##A[4 /*13*/]*varSig##B[2 /*03*/] ) \
-      - R_3023*( varSig##A[2 /*03*/]*varSig##B[5 /*23*/] + varSig##A[5 /*23*/]*varSig##B[2 /*03*/] ) \
-    + R_1213*( varSig##A[3 /*12*/]*varSig##B[4 /*13*/] + varSig##A[4 /*13*/]*varSig##B[3 /*12*/] ) \
-      + R_1223*( varSig##A[3 /*12*/]*varSig##B[5 /*23*/] + varSig##A[5 /*23*/]*varSig##B[3 /*12*/] ) \
-      + R_1323*( varSig##A[4 /*13*/]*varSig##B[5 /*23*/] + varSig##A[5 /*23*/]*varSig##B[4 /*13*/] ) \
+    - R_1001 * (varSig.SK##A[0]) * (varSig.SK##B[0]) \
+    - R_2002 * (varSig.SK##A[1]) * (varSig.SK##B[1]) \
+    - R_3003 * (varSig.SK##A[2]) * (varSig.SK##B[2]) \
+    + R_1212 * (varSig.SK##A[3]) * (varSig.SK##B[3]) \
+    + R_1313 * (varSig.SK##A[4]) * (varSig.SK##B[4]) \
+    + R_2323 * (varSig.SK##A[5]) * (varSig.SK##B[5]) \
+    - R_1002*( (varSig.SK##A[0])*(varSig.SK##B[1]) + (varSig.SK##A[1])*(varSig.SK##B[0]) ) \
+      - R_1003*( (varSig.SK##A[0])*(varSig.SK##B[2]) + (varSig.SK##A[2])*(varSig.SK##B[0]) ) \
+      - R_1012*( (varSig.SK##A[0])*(varSig.SK##B[3]) + (varSig.SK##A[3])*(varSig.SK##B[0]) ) \
+    - R_1013*( (varSig.SK##A[0])*(varSig.SK##B[4]) + (varSig.SK##A[4])*(varSig.SK##B[0]) ) \
+      - R_1023*( (varSig.SK##A[0])*(varSig.SK##B[5]) + (varSig.SK##A[5])*(varSig.SK##B[0]) ) \
+      - R_2003*( (varSig.SK##A[1])*(varSig.SK##B[2]) + (varSig.SK##A[2])*(varSig.SK##B[1]) ) \
+    - R_2012*( (varSig.SK##A[1])*(varSig.SK##B[3]) + (varSig.SK##A[3])*(varSig.SK##B[1]) ) \
+      - R_2013*( (varSig.SK##A[1])*(varSig.SK##B[4]) + (varSig.SK##A[4])*(varSig.SK##B[1]) ) \
+      - R_2023*( (varSig.SK##A[1])*(varSig.SK##B[5]) + (varSig.SK##A[5])*(varSig.SK##B[1]) ) \
+    - R_3012*( (varSig.SK##A[2])*(varSig.SK##B[3]) + (varSig.SK##A[3])*(varSig.SK##B[2]) ) \
+      - R_3013*( (varSig.SK##A[2])*(varSig.SK##B[4]) + (varSig.SK##A[4])*(varSig.SK##B[2]) ) \
+      - R_3023*( (varSig.SK##A[2])*(varSig.SK##B[5]) + (varSig.SK##A[5])*(varSig.SK##B[2]) ) \
+    + R_1213*( (varSig.SK##A[3])*(varSig.SK##B[4]) + (varSig.SK##A[4])*(varSig.SK##B[3]) ) \
+      + R_1223*( (varSig.SK##A[3])*(varSig.SK##B[5]) + (varSig.SK##A[5])*(varSig.SK##B[3]) ) \
+      + R_1323*( (varSig.SK##A[4])*(varSig.SK##B[5]) + (varSig.SK##A[5])*(varSig.SK##B[4]) ) \
   ) )
 
 #endif

@@ -54,6 +54,14 @@ struct RaytraceData {
   RT rho;
 };
 
+// struct containing "screen tensor" information
+// type associated with "screen tensor", \f$\varsig_A\f \equiv s^\alpha_{\mathcal{A}} k^\mu$, where $A = {\alpha, \mu}$
+template<typename RT>
+struct VarSig {
+  RT SK1[6]; ///< Quantities assocated with one screen vector
+  RT SK2[6]; ///< Quantities assocated with a second screen vector
+};
+
 } // namespace cosmo
 
 #endif
