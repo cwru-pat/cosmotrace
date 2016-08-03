@@ -8,4 +8,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-./raytrace
+for i in `seq 1 6`;
+do
+  ./raytrace $i
+  if [ $? -ne 0 ]; then
+      echo "Error running raytrace code."
+      exit 1
+  fi
+done

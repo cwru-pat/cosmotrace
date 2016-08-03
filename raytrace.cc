@@ -10,6 +10,7 @@
 #include <limits>
 #include <iostream>
 #include <zlib.h>
+#include <cstdlib>
 
 typedef double real_t;
 
@@ -44,11 +45,27 @@ int main(int argc, char **argv)
     {6, "Interpolated Kasner"}
   };
   int test_type = 0;
-  std::cout << "\n Enter test simulation type: \n";
-  for(auto i=test_type_list.begin(); i!=test_type_list.end(); ++i)
-    std::cout << "  " << i->first << ": " << i->second << '\n';
-  std::cout << " > ";
-  std::cin >> test_type;
+  if(argc > 1)
+  {
+    test_type = atoi(argv[1]);
+
+    if(test_type_list.find(test_type) == test_type_list.end() /* not found */)
+    {
+      std::cout << "Unrecognized spacetime type! Exiting.\n";
+      return EXIT_FAILURE;
+    }
+
+    std::cout << "\nRunning '" << test_type_list[test_type]
+              << "' Simulation.\n";
+  }
+  else
+  {
+    std::cout << "\n Enter test simulation type: \n";
+    for(auto i=test_type_list.begin(); i!=test_type_list.end(); ++i)
+      std::cout << "  " << i->first << ": " << i->second << '\n';
+    std::cout << " > ";
+    std::cin >> test_type;
+  }
 
   // run time
   real_t t_start = 4.0;

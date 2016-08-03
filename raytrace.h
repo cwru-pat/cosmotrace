@@ -245,7 +245,7 @@ class RayTrace
      */
     RT WeylLensingScalarSum_Re()
     {
-      return ( WEYL_LENSING_SCALAR_SUM(1, 1) - WEYL_LENSING_SCALAR_SUM(2, 2) );
+      return 0.5 * ( WEYL_LENSING_SCALAR_SUM(1, 1) - WEYL_LENSING_SCALAR_SUM(2, 2) );
     }
 
     /**
@@ -256,7 +256,7 @@ class RayTrace
      */
     RT WeylLensingScalarSum_Im()
     {
-      return -0.5*2.0*( WEYL_LENSING_SCALAR_SUM(1, 2) + WEYL_LENSING_SCALAR_SUM(2, 1) );
+      return - 0.5 * ( WEYL_LENSING_SCALAR_SUM(1, 2) + WEYL_LENSING_SCALAR_SUM(2, 1) );
     }
 
     /**

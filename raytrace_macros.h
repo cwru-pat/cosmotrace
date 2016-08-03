@@ -19,33 +19,20 @@
     - rp.GL[iIDX(1)][aIDX(i,m)]*rp.G[iIDX(1)][aIDX(j,l)] \
       - rp.GL[iIDX(2)][aIDX(i,m)]*rp.G[iIDX(2)][aIDX(j,l)] \
       - rp.GL[iIDX(3)][aIDX(i,m)]*rp.G[iIDX(3)][aIDX(j,l)] \
-    - rp.K[aIDX(i,m)]*rp.K[aIDX(j,l)] + rp.K[aIDX(i,j)]*rp.K[aIDX(m,l)] \
+    + rp.K[aIDX(i,m)]*rp.K[aIDX(j,l)] - rp.K[aIDX(i,j)]*rp.K[aIDX(m,l)] \
   )
 
 #define RIEMANN_I0MJ(i, m, j) ( \
     rp.dK[iIDX(j)][aIDX(i,m)] - rp.dK[iIDX(m)][aIDX(i,j)] \
-    + rp.gi[aIDX(1,1)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,1)] \
-      + rp.gi[aIDX(1,2)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,2)] \
-      + rp.gi[aIDX(1,3)]*( rp.dg[iIDX(m)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(m,1)] )*rp.K[aIDX(j,3)] \
-    + rp.gi[aIDX(2,1)]*( rp.dg[iIDX(m)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(m,2)] )*rp.K[aIDX(j,1)] \
-      + rp.gi[aIDX(2,2)]*( rp.dg[iIDX(m)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(m,2)] )*rp.K[aIDX(j,2)] \
-      + rp.gi[aIDX(2,3)]*( rp.dg[iIDX(m)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(m,2)] )*rp.K[aIDX(j,3)] \
-    + rp.gi[aIDX(3,1)]*( rp.dg[iIDX(m)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(m,3)] )*rp.K[aIDX(j,1)] \
-      + rp.gi[aIDX(3,2)]*( rp.dg[iIDX(m)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(m,3)] )*rp.K[aIDX(j,2)] \
-      + rp.gi[aIDX(3,3)]*( rp.dg[iIDX(m)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(m,3)] )*rp.K[aIDX(j,3)] \
-    - rp.gi[aIDX(1,1)]*( rp.dg[iIDX(j)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(j,1)] )*rp.K[aIDX(m,1)] \
-      - rp.gi[aIDX(1,2)]*( rp.dg[iIDX(j)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(j,1)] )*rp.K[aIDX(m,2)] \
-      - rp.gi[aIDX(1,3)]*( rp.dg[iIDX(j)][aIDX(1,i)] + rp.GL[iIDX(i)][aIDX(j,1)] )*rp.K[aIDX(m,3)] \
-    - rp.gi[aIDX(2,1)]*( rp.dg[iIDX(j)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(j,2)] )*rp.K[aIDX(m,1)] \
-      - rp.gi[aIDX(2,2)]*( rp.dg[iIDX(j)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(j,2)] )*rp.K[aIDX(m,2)] \
-      - rp.gi[aIDX(2,3)]*( rp.dg[iIDX(j)][aIDX(2,i)] + rp.GL[iIDX(i)][aIDX(j,2)] )*rp.K[aIDX(m,3)] \
-    - rp.gi[aIDX(3,1)]*( rp.dg[iIDX(j)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(j,3)] )*rp.K[aIDX(m,1)] \
-      - rp.gi[aIDX(3,2)]*( rp.dg[iIDX(j)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(j,3)] )*rp.K[aIDX(m,2)] \
-      - rp.gi[aIDX(3,3)]*( rp.dg[iIDX(j)][aIDX(3,i)] + rp.GL[iIDX(i)][aIDX(j,3)] )*rp.K[aIDX(m,3)] \
+    + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] \
+    - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] \
   )
 
 #define RIEMANN_I00J(i, j) \
-  -rp.Ricci[aIDX(i,j)] - rp.trK*rp.K[aIDX(i,j)] + 4.0*RAY_PI*rp.g[aIDX(i,j)]*rp.rho
+  rp.g[aIDX(1,1)]*rp.K[aIDX(i,1)]*rp.K[aIDX(1,j)] + rp.g[aIDX(1,2)]*rp.K[aIDX(i,1)]*rp.K[aIDX(2,j)] + rp.g[aIDX(1,3)]*rp.K[aIDX(i,1)]*rp.K[aIDX(3,j)] \
+  + rp.g[aIDX(2,1)]*rp.K[aIDX(i,2)]*rp.K[aIDX(1,j)] + rp.g[aIDX(2,2)]*rp.K[aIDX(i,2)]*rp.K[aIDX(2,j)] + rp.g[aIDX(2,3)]*rp.K[aIDX(i,2)]*rp.K[aIDX(3,j)] \
+  + rp.g[aIDX(3,1)]*rp.K[aIDX(i,3)]*rp.K[aIDX(1,j)] + rp.g[aIDX(3,2)]*rp.K[aIDX(i,3)]*rp.K[aIDX(2,j)] + rp.g[aIDX(3,3)]*rp.K[aIDX(i,3)]*rp.K[aIDX(3,j)] \
+  - rp.Ricci[aIDX(i,j)] - rp.trK*rp.K[aIDX(i,j)] + 4.0*RAY_PI*rp.g[aIDX(i,j)]*rp.rho
 
 #define LINEAR_INTERPOLATION(var) \
   linearInterpolation( \
@@ -54,7 +41,7 @@
   )
 
 #define WEYL_LENSING_SCALAR_SUM(A, B) ( \
-  -4.0*( \
+  2.0*( \
     - R_1001 * (varSig.SK##A[0]) * (varSig.SK##B[0]) \
     - R_2002 * (varSig.SK##A[1]) * (varSig.SK##B[1]) \
     - R_3003 * (varSig.SK##A[2]) * (varSig.SK##B[2]) \
