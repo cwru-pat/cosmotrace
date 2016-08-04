@@ -24,14 +24,14 @@
 
 #define RIEMANN_I0MJ(i, m, j) ( \
     rp.dK[iIDX(j)][aIDX(i,m)] - rp.dK[iIDX(m)][aIDX(i,j)] \
-    + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] \
-    - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] \
+    + rp.K[aIDX(j,1)]*rp.G[iIDX(1)][aIDX(i,m)] + rp.K[aIDX(j,2)]*rp.G[iIDX(2)][aIDX(i,m)] + rp.K[aIDX(j,3)]*rp.G[iIDX(3)][aIDX(i,m)] \
+    - rp.K[aIDX(m,1)]*rp.G[iIDX(1)][aIDX(i,j)] - rp.K[aIDX(m,2)]*rp.G[iIDX(2)][aIDX(i,j)] - rp.K[aIDX(m,3)]*rp.G[iIDX(3)][aIDX(i,j)] \
   )
 
 #define RIEMANN_I00J(i, j) \
-  rp.g[aIDX(1,1)]*rp.K[aIDX(i,1)]*rp.K[aIDX(1,j)] + rp.g[aIDX(1,2)]*rp.K[aIDX(i,1)]*rp.K[aIDX(2,j)] + rp.g[aIDX(1,3)]*rp.K[aIDX(i,1)]*rp.K[aIDX(3,j)] \
-  + rp.g[aIDX(2,1)]*rp.K[aIDX(i,2)]*rp.K[aIDX(1,j)] + rp.g[aIDX(2,2)]*rp.K[aIDX(i,2)]*rp.K[aIDX(2,j)] + rp.g[aIDX(2,3)]*rp.K[aIDX(i,2)]*rp.K[aIDX(3,j)] \
-  + rp.g[aIDX(3,1)]*rp.K[aIDX(i,3)]*rp.K[aIDX(1,j)] + rp.g[aIDX(3,2)]*rp.K[aIDX(i,3)]*rp.K[aIDX(2,j)] + rp.g[aIDX(3,3)]*rp.K[aIDX(i,3)]*rp.K[aIDX(3,j)] \
+  rp.gi[aIDX(1,1)]*rp.K[aIDX(i,1)]*rp.K[aIDX(1,j)] + rp.gi[aIDX(1,2)]*rp.K[aIDX(i,1)]*rp.K[aIDX(2,j)] + rp.gi[aIDX(1,3)]*rp.K[aIDX(i,1)]*rp.K[aIDX(3,j)] \
+  + rp.gi[aIDX(2,1)]*rp.K[aIDX(i,2)]*rp.K[aIDX(1,j)] + rp.gi[aIDX(2,2)]*rp.K[aIDX(i,2)]*rp.K[aIDX(2,j)] + rp.gi[aIDX(2,3)]*rp.K[aIDX(i,2)]*rp.K[aIDX(3,j)] \
+  + rp.gi[aIDX(3,1)]*rp.K[aIDX(i,3)]*rp.K[aIDX(1,j)] + rp.gi[aIDX(3,2)]*rp.K[aIDX(i,3)]*rp.K[aIDX(2,j)] + rp.gi[aIDX(3,3)]*rp.K[aIDX(i,3)]*rp.K[aIDX(3,j)] \
   - rp.Ricci[aIDX(i,j)] - rp.trK*rp.K[aIDX(i,j)] + 4.0*RAY_PI*rp.g[aIDX(i,j)]*rp.rho
 
 #define LINEAR_INTERPOLATION(var) \
