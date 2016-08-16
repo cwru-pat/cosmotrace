@@ -159,8 +159,6 @@ class RayTrace
           rp.ddg[b][a] = LINEAR_INTERPOLATION(ddg[b][a]);
         }
       }
-
-      int a = 0;
     }
 
     RT linearInterpolation(
